@@ -1,0 +1,30 @@
+0 HEAD
+1 CHAR UTF-8
+0 @I0000@ INDI
+1 NAME Josefina /Kinnari/
+2 GIVN Josefina
+2 SURN Kinnari
+1 SOUR @S0001@
+1 SEX F
+1 BIRT
+2 DATE 2 APR 1837
+2 PLAC Vanaja Ikaaloinen
+2 SOUR @S0001@
+0 @I0001@ INDI
+1 NAME Eva Christina
+1 SEX F
+1 BIRT
+2 DATE 11 APR 1837
+2 PLAC Vanaja 
+2 SOUR @S0002@
+0 @S0001@ SOUR
+1 TITL http://hiski.genealogia.fi/hiski?fi+t8685631
+1 CHAN
+2 DATE 28 JAN 2017
+3 TIME 22:28:15
+0 @S0002@ SOUR
+1 TITL http://hiski.genealogia.fi/hiski?fi+t8685632
+1 CHAN
+2 DATE 28 JAN 2017
+3 TIME 22:28:15
+0 TRLR

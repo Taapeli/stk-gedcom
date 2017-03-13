@@ -1,0 +1,24 @@
+0 HEAD 
+1 NOTE _TRANSFORM v.0.2 gedcom_transform.py
+2 CONT _COMMAND gedcom_transform.py mar tests/input-marriages-1.ged --out tests/output-marriages-1.ged
+2 CONT _DATE kkujansuu 24 Jan 2017 14:07:10
+0 @I1@ INDI
+1 RESI
+2 TYPE marriage
+2 DATE 12 MAY 1888
+2 PLAC p2, p1
+1 NAME a
+1 FAMS @F1@
+0 @I2@ INDI
+1 RESI
+2 TYPE marriage
+2 DATE 12 MAY 1888
+2 PLAC p3, p1
+1 FAMS @F1@
+0 @F1@ FAM
+1 MARR 
+2 PLAC p1
+2 DATE 12 MAY 1888
+1 HUSB @I1@
+1 WIFE @I2@
+1 TRLR 
