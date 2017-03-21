@@ -25,6 +25,7 @@ import logging
 import gedcom_transform
 
 _LOGFILE="transform.log"
+input_gedcom = None
 
 # Show menu in application window, not on the top of Ubuntu desktop
 os.environ['UBUNTU_MENUPROXY']='0'
@@ -51,7 +52,7 @@ class Handler:
         self.run_args = run_args
 
         self.builder = Gtk.Builder()
-        self.builder.add_from_file("view/Gedder.glade")
+        self.builder.add_from_file("ui/Gedder.glade")
         self.builder.connect_signals(self)
         self.window = self.builder.get_object("applicationwindow")
         self.aboutdialog = self.builder.get_object("displaystate")
@@ -77,18 +78,18 @@ class Handler:
         ''' Valittu välilehti määrää toiminnon 
         '''
         opers = (None, "names", "places", "marriages", "hiskisources", "kasteet")
-        op_selected = None
+        self.op_selected = None
         
         self.tab = notebook.get_nth_page(page_num)
         self.label = notebook.get_tab_label(self.tab).get_label()
         if page_num < len(opers):
-            op_selected = opers[page_num]
+            self.op_selected = opers[page_num]
     
-        self.builder.get_object("checkbutton2").set_sensitive(op_selected == 'places')
+        self.builder.get_object("checkbutton2").set_sensitive(self.op_selected == 'places')
 
         # Define transformer program and the argumets used
-        if op_selected:
-            self.transformer, vers, doc = self.get_transform_func(op_selected)
+        if self.op_selected:
+            self.transformer, vers, doc = self.get_transform_func(self.op_selected)
             if self.transformer: 
                 self.message_id = self.st.push(self.st_id, doc + " " + vers)
                 self.activate_run_button()
@@ -103,7 +104,8 @@ class Handler:
         
         print("Lokitiedot: {!r}".format(_LOGFILE))
         self.init_log()
-        gedcom_transform.process_gedcom(self.run_args, self.transformer, button.get_label())
+        disp_cmd = self.op_selected
+        gedcom_transform.process_gedcom(self.run_args, self.transformer, task_name=disp_cmd)
 
         self.st.push(self.st_id, "{} tehty".format(button.get_label()))
 #         rev = self.builder.get_object("revertButton")
@@ -119,7 +121,7 @@ class Handler:
     def on_showButton_clicked(self, button):
         ''' Näytetään luettu lokitiedosto uudessa ikkunassa '''
         self.builder2 = Gtk.Builder()
-        self.builder2.add_from_file("view/displaystate.glade")
+        self.builder2.add_from_file("ui/displaystate.glade")
         self.builder2.connect_signals(self)
         msg = self.builder2.get_object("msg")
         self.disp_window = self.builder2.get_object("displaystate")
@@ -144,7 +146,7 @@ class Handler:
                 elif line.startswith("ERROR:"):
                     self.textbuffer.insert_with_tags(position,line[6:], e_tag)
                 else:
-                    self.textbuffer.insert(position, line)
+                    self.textbuffer.insert(position, line, e_tag)
             f.close()
         except FileNotFoundError:
             position = self.textbuffer.get_end_iter()
@@ -162,6 +164,11 @@ class Handler:
         value = combo.get_active_text()
         self.run_args.__setattr__('encoding', value)
         self.st.push(self.st_id, "Valittu merkistö " + value)
+
+    def on_checkbutton_toggled(self, checkButton):
+        self.st.push(self.st_id, "Painettu: " + checkButton.get_label())
+        rev = self.builder.get_object("revertButton")
+        rev.set_sensitive(False)
 
     def inputFilechooser_set(self, button):
         ''' The user has selected a file '''
@@ -194,6 +201,7 @@ class Handler:
 
     def activate_run_button(self):
         ''' If file and operation are choosen '''
+        global input_gedcom
         runb = self.builder.get_object("runButton")
         if input_gedcom and self.transformer: 
             runb.set_sensitive(True)

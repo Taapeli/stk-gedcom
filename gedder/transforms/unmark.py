@@ -4,7 +4,7 @@ Restores marked tags: <tag>-X -> <tag>
 """
 
 _VERSION = "1.0"
-from classes.gedcom_line import GedcomLine
+from transforms.model.gedcom_line import GedcomLine
 
 def add_args(parser):
     pass

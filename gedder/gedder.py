@@ -11,7 +11,7 @@ import importlib
 import logging
 from argparse import Namespace
 
-from view.gedder_handler import Handler
+from ui.gedder_handler import Handler
 #import gedcom_transform
 _LOGFILE="transform.log"
 transformer = None
@@ -20,12 +20,24 @@ transformer = None
 os.environ['UBUNTU_MENUPROXY']='0'
 LOG = logging.getLogger(__name__)
 run_args = Namespace(# Global options
-                     input_gedcom=None, output_gedcom=None, display_changes=False, dryrun=False, 
-                     nolog=False, encoding='utf-8',
+                     input_gedcom=None, 
+                     output_gedcom=None, 
+                     display_changes=False, 
+                     dryrun=False, 
+                     nolog=False, 
+                     encoding='utf-8',
                      # places options
-                     reverse=False, add_commas=False, ignore_lowercase=False, display_nonchanges=False,
-                     ignore_digits=False, minlen=0, auto_order=False, auto_combine=False, 
-                     match='', parishfile="seurakunnat.txt", villagefile="kylat.txt")
+                     reverse=False, 
+                     add_commas=False, 
+                     ignore_lowercase=False, 
+                     display_nonchanges=False,
+                     ignore_digits=False, 
+                     minlen=0, 
+                     auto_order=False, 
+                     auto_combine=False, 
+                     match='', 
+                     parishfile="static/seurakunnat.txt", 
+                     villagefile="static/seurakunnat.txt")
 
 
 def get_transform(name):

@@ -31,9 +31,9 @@ Created on 26.11.2016
 #           1 SEX M
 #             ...
 
-#from classes.gedcom_line import GedcomLine
-from classes.gedcom_record import GedcomRecord
-from classes.person_name import PersonName
+#from transforms.model.gedcom_line import GedcomLine
+from transforms.model.gedcom_record import GedcomRecord
+from transforms.model.person_name import PersonName
 
 # Active Indi logical record GedcomRecord
 indi_record = None

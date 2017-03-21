@@ -76,8 +76,8 @@ import datetime
 import logging
 LOG = logging.getLogger(__name__)
 
-from classes.gedcom_line import GedcomLine
-from classes.ged_output import Output
+from transforms.model.gedcom_line import GedcomLine
+from transforms.model.ged_output import Output
 
 def numeric(s):
     return s.replace(".","").isdigit()

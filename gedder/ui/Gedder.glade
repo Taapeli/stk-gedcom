@@ -562,13 +562,14 @@ along with Taapeli Suomi-tietokanta.  If not, see <http://www.gnu.org/licenses/>
                 </child>
                 <child>
                   <object class="GtkCheckButton" id="c_ignore_lowercase">
+                    <property name="label" translatable="yes">Ohita pikkukirjaimilla kirjoitetut sanat</property>
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">False</property>
-                    <property name="use_stock">True</property>
                     <property name="xalign">0</property>
+                    <property name="image_position">right</property>
                     <property name="draw_indicator">True</property>
-                    <signal name="toggled" handler="on_c_ignore_lowercase_toggled" swapped="no"/>
+                    <signal name="toggled" handler="on_checkbutton_toggled" swapped="no"/>
                   </object>
                   <packing>
                     <property name="expand">False</property>

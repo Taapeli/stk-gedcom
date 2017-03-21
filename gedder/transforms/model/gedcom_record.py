@@ -8,8 +8,8 @@ import logging
 import datetime
 LOG = logging.getLogger(__name__)
 
-from classes.gedcom_line import GedcomLine
-from classes.person_name import PersonName
+from transforms.model.gedcom_line import GedcomLine
+from transforms.model.person_name import PersonName
 
 
 class GedcomRecord(GedcomLine):
@@ -93,7 +93,7 @@ class GedcomRecord(GedcomLine):
 
 if __name__ == '__main__':
     # Test set
-    from classes.ged_output import Output
+    from transforms.model.ged_output import Output
     from argparse import Namespace
     logging.basicConfig(filename='example.log',level=logging.INFO, format='%(levelname)s:%(message)s')
     LOG.info("------ Ajo '%s' alkoi %s", "Testi", datetime.datetime.now().strftime('%a %Y-%m-%d %H:%M:%S') + " ------")

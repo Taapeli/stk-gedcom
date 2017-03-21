@@ -53,9 +53,9 @@ def add_args(parser):
     parser.add_argument('--match', type=str, action='append',
                         help='Only process places containing any match string')
     parser.add_argument('--parishfile', type=str,
-                        help='File with a list of parishes', default="seurakunnat.txt")
+                        help='File with a list of parishes', default="static/seurakunnat.txt")
     parser.add_argument('--villagefile', type=str,
-                        help='File with a list of villages', default="kylat.txt")
+                        help='File with a list of villages', default="static/kylat.txt")
     #parser.add_argument('--display-changes', action='store_true',
     #                    help='Display changed places')
     parser.add_argument('--display-nonchanges', action='store_true',
@@ -111,7 +111,8 @@ def numeric(s):
 def read_parishes(parishfile):
     for line in open(parishfile,encoding="utf-8"):
         line = line.strip()
-        if line == "": continue
+        if line == "":
+            continue
         num,name = line.split(None,1)
         for x in name.split("-"):
             name2 = x.strip().lower()
@@ -120,7 +121,8 @@ def read_parishes(parishfile):
 def read_villages(villagefile):
     for line in open(villagefile,encoding="utf-8"):
         line = line.strip()
-        if line == "": continue
+        if not ":" in line:
+            continue
         parish,village = line.split(":",1)
         parish = parish.strip().lower()
         village = village.strip().lower()
