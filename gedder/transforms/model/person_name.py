@@ -42,19 +42,15 @@ class PersonName(GedcomLine):
        from each of them
     '''
 
-#     def __str__(self):
-#         return "{} NAME {}".format(self.level, self.value)
-
-
     def __init__(self, gedline):
         ''' Creates a new instance on person name definition from a '1 NAME' row.
-            The arguments must be a NAME gedcom line.
+            The arguments must be a NAME or ALIA gedcom line with person name.
         '''
 #       Example: GedLine{
 #         path='@I0001@.NAME'
 #         level=2
 #         tag='NAME'
-#         value='Anders (Antti)/Puuhaara e. Träskalle/' }
+#         value='Anders (Antti)/Puupää e. Träskalle/' }
 
         self.rows = []
         # pref_name shall carry information, if all descendant rows from input file 
@@ -192,6 +188,7 @@ class PersonName(GedcomLine):
         prefn = self.pref_name
         for nm, origin, prefix in self._get_surname_list():
             name = '{}/{}/{}'.format(self.givn, nm.strip(), self.nsfx)
+            #TODO: Find out default name type from tag NAME or ALIA
             pn = PersonName((self.level, 'NAME', name))
             pn.surn = nm
             pn.givn = self.givn
@@ -359,6 +356,9 @@ class PersonName(GedcomLine):
         my_tags = [['NAME', pn.value], ['GIVN', pn.givn], ['SURN', pn.surn], ['NSFX', pn.nsfx]]
         if hasattr(pn, 'origin'):
             my_tags.append(['TYPE', pn.origin])
+        elif pn.tag == 'ALIA':
+            # An ALIA line with name is considered as AKA name, if not otherwise defined
+            my_tags.append(['TYPE', 'aka'])
         if hasattr(pn, 'call_name'):
             my_tags.append(['NOTE', '_CALL ' + pn.call_name])
         if hasattr(pn, 'nick_name'):
@@ -389,7 +389,7 @@ class PersonName(GedcomLine):
                       format(r.path, len(pn.rows), r.tag, new_value))
                 pn.rows.append(GedcomLine((r.level, r.tag, new_value)))
                 # Show NAME differences 
-                if r.tag == 'NAME':
+                if r.tag in ['NAME', 'ALIA']:
                     if re.sub(r' ', '', pn.value.lower()) != name_self: 
                         report_change(r.tag, self.value, new_value)
                     pn.pref_name = False

@@ -30,7 +30,7 @@ input_gedcom = None
 # Show menu in application window, not on the top of Ubuntu desktop
 os.environ['UBUNTU_MENUPROXY']='0'
 
-LOG = logging.getLogger(__name__)
+LOG = logging.getLogger('gedder')
 # run_args = Namespace(# Global options
 #                      output_gedcom=None, display_changes=False, dryrun=False, nolog=False, encoding='utf-8',
 #                      # places options
@@ -50,6 +50,7 @@ class Handler:
         self.transformer = None
         self.input_gedcom = None
         self.run_args = run_args
+        self.loglevel = LOG.INFO
 
         self.builder = Gtk.Builder()
         self.builder.add_from_file("ui/Gedder.glade")
@@ -132,6 +133,8 @@ class Handler:
                                             foreground_rgba=Gdk.RGBA(0, 0, 0.5, 1))
         e_tag = self.textbuffer.create_tag( "error", weight=Pango.Weight.BOLD, 
                                             foreground_rgba=Gdk.RGBA(0.5, 0, 0, 1))
+        d_tag = self.textbuffer.create_tag( "debug", #style=Pango.Style.ITALIC, 
+                                            foreground_rgba=Gdk.RGBA(0, 0, 0.5, 1))
         msg.modify_font(Pango.FontDescription("Monospace 9"))
         
         # Read logfile and show it's content formatted in self.textview
@@ -146,14 +149,14 @@ class Handler:
                 elif line.startswith("ERROR:"):
                     self.textbuffer.insert_with_tags(position,line[6:], e_tag)
                 else:
-                    self.textbuffer.insert(position, line, e_tag)
+                    self.textbuffer.insert_with_tags(position, line.replace('DEBUG:', '', 1), d_tag)
             f.close()
         except FileNotFoundError:
             position = self.textbuffer.get_end_iter()
             self.textbuffer.insert_with_tags(position,"Ei tuloksia näytettävänä", e_tag)
         except Exception as e:
             position = self.textbuffer.get_end_iter()
-            self.textbuffer.insert_with_tags(position,"{}: Virhe {!r}".format(self.__name__, str(e)), e_tag)
+            self.textbuffer.insert_with_tags(position,"Virhe {!r}".format(str(e), e_tag))
 
     def on_displaystate_close(self, *args):
         ''' Suljetaan lokitiedosto-ikkuna '''
@@ -164,6 +167,12 @@ class Handler:
         value = combo.get_active_text()
         self.run_args.__setattr__('encoding', value)
         self.st.push(self.st_id, "Valittu merkistö " + value)
+    
+    def on_combo_logging_changed(self, combo):
+        value = combo.get_active_id()
+        self.loglevel = int(value)
+#         LOG.setLevel(int(value))
+        self.st.push(self.st_id, "Lokitaso " + logging.getLevelName(value))
 
     def on_checkbutton_toggled(self, checkButton):
         self.st.push(self.st_id, "Painettu: " + checkButton.get_label())
@@ -215,5 +224,5 @@ class Handler:
                 os.rename(_LOGFILE, _LOGFILE + '~')
         except:
             pass
-        logging.basicConfig(filename=_LOGFILE,level=logging.INFO, format='%(levelname)s:%(message)s')
+        logging.basicConfig(filename=_LOGFILE,level=self.loglevel, format='%(levelname)s:%(message)s')
 

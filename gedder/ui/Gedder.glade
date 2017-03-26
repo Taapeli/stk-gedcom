@@ -389,11 +389,12 @@ along with Taapeli Suomi-tietokanta.  If not, see <http://www.gnu.org/licenses/>
                         <property name="active">1</property>
                         <items>
                           <item id="None" translatable="yes">Ei lokia</item>
-                          <item id="INFO" translatable="yes">Info</item>
-                          <item id="WARNING" translatable="yes">Varoitukset</item>
-                          <item id="ERROR" translatable="yes">Virheet</item>
-                          <item id="DEBUG" translatable="yes">Vianetsintä</item>
+                          <item id="20" translatable="yes">Info</item>
+                          <item id="30" translatable="yes">Varoitukset</item>
+                          <item id="40" translatable="yes">Virheet</item>
+                          <item id="10" translatable="yes">Vianetsintä</item>
                         </items>
+                        <signal name="changed" handler="on_combo_logging_changed" swapped="no"/>
                       </object>
                       <packing>
                         <property name="left_attach">1</property>

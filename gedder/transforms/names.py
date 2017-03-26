@@ -101,7 +101,7 @@ def phase3(args, gedline, f):
 
     if state == 1:      # INDI processing active
         if gedline.level == 1:
-            if gedline.tag == 'NAME':
+            if _gedline_is_a_NAME(gedline):
                 # Start a new PersonName in GedcomRecord
                 _T4_store_name(gedline)
                 state = 2
@@ -117,7 +117,7 @@ def phase3(args, gedline, f):
     if state == 2:      # NAME processing active in INDI
         if gedline.level == 1:
             # Level 1 lines terminate current NAME group
-            if gedline.tag == 'NAME':
+            if _gedline_is_a_NAME(gedline):
                 # Start a new PersonName in GedcomRecord
                 _T4_store_name(gedline)
                 state = 2
@@ -139,7 +139,7 @@ def phase3(args, gedline, f):
             state = 1
             return
         if gedline.level == 1:
-            if gedline.tag == 'NAME':
+            if _gedline_is_a_NAME(gedline):
                 # Start a new PersonName in GedcomRecord
                 _T4_store_name(gedline)
                 state = 2
@@ -152,13 +152,13 @@ def phase3(args, gedline, f):
         return
 
 '''# ---- Automation rules ----
-
-# !state \ input !! 0 INDI!!0 . . .!! 1 NAME !! 1 BIRT !! 2 DATE !! 2,3,4,...!!1 . . .!! end
-# |--------------++-------++-------++--------++--------++--------++----------++-------++-----
-# | 0  "Started" || 1,T1  || 0,T3  || 0,T3   || 0,T3   || 0,T3   || 0,T3     || 0,T3  || 0,T2
-# | 1  "INDI"    || 1,T1  || 0,T2  || 2,T4   || 3,T6   || 1,T6   || 1,T6     || 1,T6  || 0,T2
-# | 2  "NAME"    || 1,T1  || 0,T2  || 2,T4   || 3,T6   || 2,T7   || 2,T7     || 1,T6  || 0,T2
-# | 3  "BIRT"    || 1,T1  || 0,T2  || 2,T4   || 1,T6   || 1,T5   || 3,T6     || 1,T6  || 0,T2
+#                             1 ALIA
+# state \input!!0 INDI!0 ... !1 NAME !1 BIRT !2 DATE !2,3,4, !1 ... ! end
+#-------------++------+------+-------+-------+-------+------+-----
+# 0  "Started"|| 1,T1 | 0,T3 | 0,T3  | 0,T3  | 0,T3  | 0,T3  | 0,T3 | 0,T2
+# 1  "INDI"   || 1,T1 | 0,T2 | 2,T4  | 3,T6  | 1,T6  | 1,T6  | 1,T6 | 0,T2
+# 2  "NAME"   || 1,T1 | 0,T2 | 2,T4  | 3,T6  | 2,T7  | 2,T7  | 1,T6 | 0,T2
+# 3  "BIRT"   || 1,T1 | 0,T2 | 2,T4  | 1,T6  | 1,T5  | 3,T6  | 1,T6 | 0,T2
  For example rule "2,T4" means operation T4 and new state 2.
 '''
 
@@ -204,3 +204,11 @@ def _T7_store_name_member(gedline):
     ''' Save current line to the current name object '''
     global indi_record
     indi_record.get_nameobject().add_line(gedline)
+
+
+def _gedline_is_a_NAME(gedline):
+    ''' Check if this is a NAME line or a ALIA line with no @I000@ reference.
+        (This kind of ALIA will be changed to NAME when outputting PersonName)
+    '''
+    return gedline.tag == 'NAME' or \
+        (gedline.tag == 'ALIA' and not gedline.value.startswith('@'))
