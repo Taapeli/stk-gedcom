@@ -54,7 +54,7 @@ class GedcomRecord(GedcomLine):
         '''
         if type(gedline) is PersonName:
             # gedline is "1 NAME ...". The first one is the preferred name
-            gedline.pref_name = (self.currname < 0)
+            gedline.is_preferred_name = (self.currname < 0)
 #             print("#record row({}) <= {} (name {!r})".format(len(self.rows), gedline.path, gedline.name), file=stderr)
             self.currname = len(self.rows)
             self.rows.append(gedline)

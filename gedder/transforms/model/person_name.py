@@ -11,7 +11,7 @@ LOG = logging.getLogger(__name__)
 from transforms.model.gedcom_line import GedcomLine
 
 _NONAME = 'N'            # Marker for missing name part
-_CHGTAG = "NOTE _orig_"   # Comment: original format
+_CHGTAG = "NOTE _orig_"  # Comment: original format
 
 _UNNAMED = ['nimetön', 'tuntematon', 'N.N.', '?']
 _PATRONYME = {'poika':'poika', 'p.':'poika', 'sson':'sson', 'ss.':'sson', 's.':'son',
@@ -24,6 +24,7 @@ _BABY = {"vauva":"U", "poikavauva":"M", "tyttövauva":"F",
          "(vauva)":"U", "(poikavauva)":"M", "(tyttövauva)":"F", 
          "(poikalapsi)":"M", "(tyttölapsi)":"F", "(lapsi)":"U"}
 #TODO: Lyhenteet myös ruotsiksi
+
 
 class PersonName(GedcomLine):
     '''
@@ -53,9 +54,9 @@ class PersonName(GedcomLine):
 #         value='Anders (Antti)/Puupää e. Träskalle/' }
 
         self.rows = []
-        # pref_name shall carry information, if all descendant rows from input file 
+        # is_preferred_name shall carry information, if all descendant rows from input file 
         # are included in this default name
-        self.pref_name = False
+        self.is_preferred_name = False
         if type(gedline) == GedcomLine:
             GedcomLine.__init__(self, (gedline.level, gedline.tag, gedline.value))
         else:
@@ -78,7 +79,11 @@ class PersonName(GedcomLine):
         ''' Analyze this NAME and return it's GedcomLines:
             first NAME and then the descendant rows in the level hierarchy.
             The rules about merging original and generated values should be applied here
+            
+            #TODO: Onko ALIA nimi parsittava eri tavalla kuin muut? Esim. "1 ALIA Nätti-Jussi".
+            #TODO: If there is no '/', don't output givn, surn, ... lines
         '''
+        
         ''' 1) Full name parts like 'givn/surn/nsfx' will be isolated and analyzed '''
         # Split 'ginv/surn/nsfx' from NAME line
         s1 = self.value.find('/')
@@ -100,7 +105,7 @@ class PersonName(GedcomLine):
         ''' 1.3) SURN Surname part: pick each surname as a new PersonName
                  Creates NAME, GIVN, SURN, NSFX rows and their associated lines into self.rows
         '''
-        ret = []    # List of merged lines
+        ret = []    # List of merged GedcomLines
         for pn in self._extract_surnames():
             LOG.debug('#' + str(pn))
             # Merge original and new rows
@@ -185,14 +190,15 @@ class PersonName(GedcomLine):
         '''
 
         ret = []
-        prefn = self.pref_name
-        for nm, origin, prefix in self._get_surname_list():
+        preferred = self.is_preferred_name
+        for prefix, nm, sn_type in self._get_surname_list():
             name = '{}/{}/{}'.format(self.givn, nm.strip(), self.nsfx)
-            #TODO: Find out default name type from tag NAME or ALIA
             pn = PersonName((self.level, 'NAME', name))
             pn.surn = nm
             pn.givn = self.givn
             pn.nsfx = self.nsfx
+            if self.tag == 'ALIA':
+                sn_type = _SURN[',']
             if hasattr(self,'nsfx_org'):
                 pn.nsfx_orig = self.nsfx_orig
             if hasattr(self,'call_name'):
@@ -201,115 +207,101 @@ class PersonName(GedcomLine):
                 pn.nick_name = self.nick_name
             if prefix: # von
                 pn.prefix = prefix
-            if origin:
-                pn.origin = origin
+            if sn_type:
+                pn.name_type = sn_type
             # Mark the first generated surname of a person as preferred
-            pn.pref_name = prefn
-            prefn = False
+            pn.is_preferred_name = preferred
+            preferred = False
             ret.append(pn)
         return ret
 
 
     def _get_surname_list(self):
-        ''' Returns a list of tuples (name, origin, prefix) parsed from self.surn. 
-            Origin is one of those in _SURN. 
-            A noble prefix (SPFX value) is roughly recognized by its length max 3 chrs.
+        ''' Returns a list of tuples (prefix, name, sn_type) parsed from self.surn. 
+            sn_type is one of those got from _SURN. 
+            The prefix (SPFX value like 'von') is roughly recognized by its length max 3 chrs.
+            
+            If a 'knows as' name is recognized, the return set has two rows, otherwise one row.
         '''
         
         if self.surn == "":
             # Empty surname is a surname, too
             surnames = list(" ")
         else:
-            # convert "(", /" and "," to a single separator symbol " , " and remove ")"
+            # convert "(", "/" and "," to a single separator symbol " , " and remove ")"
             nm = re.sub(r'\)', '', re.sub(r' *[/,\(] *', ' , ', self.surn))
             surnames = nm.split()
 
-        # Following surnames automate reads surnames and separators from right to left
-        # and writes PersonNames to self.rows(?) '''
-        #
-        #    !state \ input !! '/'   ! delim  ! name  ! end   ! von
-        #    |--------------++-------+-------+-------+--------
-        #    | 0 "Started"  || -     | -     | 1,op1 | -     ! -
-        #    | 1 "name"     || 0,op7 | 2,op2 | 1,op3 | 3,op4 ! 4,op5
-        #    | 2 "delim"    || -     | -     | 1,op1 | -     ! -
-        #    | 3 "end"      || -     | -     | -     | -     ! -
-        #    | 4 "von"      || 0,op7 | 2,op2 | -     | -     | 4,op6
-        #    | - "error"    || 
-        ##TODO: Each '-' should cause an error!
-        #    For example rule "2,op3" means operation op3 and new state 2.
-        #        op1: save name=nm, clear origin and prefix
-        #        op2: return (PersonName(name), origin[delim], prefix)
-        #                    and saved 'known as' name
-        #        op3: concatenate a two part name
-        #        op4: return (PersonName(name), origin[delim], prefix)
-        #        op5: create prefix
-        #        op6: concatenate a two part prefix
-        #        op7: save 'know as' name
-
         ret = []
         state = 0
-        name = None
-        prefix = None
-        origin = None
+        name = ''
         known_as = None
         self.reported_value = None
 
-        def op2_return_name():
-            # op2: return PersonName(name), origin[delim], prefix
-            #             and saved 'known as' name
-            nonlocal ret, name, origin, prefix, known_as
-            ret.append((name, origin, prefix))
-            if known_as:
-                ret.append(known_as)
-                known_as = None
-            name = ''
-            origin = None
-            prefix = None
+        ''' The Following automate reads surnames and separators from right to left
+            and stores (prefix, name, sn_type) tuples to return list ret[] 
 
+            !state \ input !! ','   ! delim ! name  ! end   ! von
+            |--------------++-------+-------+-------+-------+-------
+            | 0 "Started"  || -     | -     | 1,op1 | -     ! -
+            | 1 "name"     || 0,op7 | 2,op2 | 1,op3 | 3,op4 ! 4,op5
+            | 2 "delim"    || -     | -     | 1,op1 | -     ! -
+            | 3 "end"      || -     | -     | -     | -     ! -
+            | 4 "von"      || 0,op7 | 2,op2 | -     | -     | 4,op6
+            | - "error"    || 
+            For example rule "2,op3" means operation op3 and new state 2.
+                op1: save name=nm, clear sn_type and prefix
+                op2: return (prefix, name, sn_type[delim])
+                            and saved 'known as' name
+                op3: concatenate a two part name
+                op4: return (prefix, name, sn_type[delim])
+                op5: create prefix
+                op6: concatenate a two part prefix
+                op7: save a 'know as' name
+            Each '-' would be an error!
+        '''
 
         for nm in reversed(surnames):
-            if state == 0 or state == 3:        # Start state: Only a name expected
-                #op1: save name=nm, clear origin and prefix
+            if state == 0 or state == 2:        # Start state: Only a name expected
+                ''''op1: save name=nm, clear sn_type and prefix'''
                 name = nm.capitalize()
+                prefix = delim = None
                 state = 1
-            elif state == 1 or state == 2:      # Possible separator state / 
+            elif state == 1 or state == 4:      # Possible separator state / 
                                                 # left side name has been stored
-                if nm in '(/,':
-                    #op7: A known as -name; to be returned later
-                    known_as = (name.capitalize(), _SURN[','], prefix)
-                    name = ''
+                if nm == ',':
+                    ''''op7: A 'known as' name; to be returned later'''
+                    known_as = (prefix, name.capitalize(), _SURN[nm])
+                    prefix = None
                     state = 0
-                elif nm in _SURN: # other delim
-                    #op2: Output PersonName rows 
-                    op2_return_name()
-                    origin = _SURN[nm]
+                elif nm in _SURN: # a delimiter
+                    ''''op2: Output PersonName rows'''
+                    ret.append((prefix, name, _SURN[delim]))
+                    if known_as:
+                        ret.append(known_as)
+                        known_as = None
+                    prefix = None
+                    name = ''
+                    delim = nm
                     state = 2
                 elif len(nm) < 4 and not '.' in nm: # von
-                    #op5: Propably a noble prefix
-                    prefix = nm.lower()
+                    ''''op5/op6: Create or concatenate prefix'''
+                    if prefix:
+                        prefix = ' '.join(nm.lower(), prefix)
+                    else:
+                        prefix = nm.lower()
                     state = 4
                 else: # name
-                    #op3: Another name found
-                    name = str.rstrip(nm.capitalize() + ' ' + name)
-            else: # state == 4:
-                if nm in _SURN: # delim
-                    #op2: A separator 'os.', ... found: 
-                    #     Output PersonName rows 
-                    op2_return_name()
-                    origin = _SURN[nm]
-                    state = 2
-                else: # von
-                    #op5: Propably a multi word prefix
-                    prefix = str.rstrip(nm.lower() + ' ' + prefix)
-                    state = 4
+                    ''''op3: Another name found'''
+                    name = ' '.join(nm.capitalize(), name)
 
-        #op4: End: output the last name
+        ''''op4: End: output the last name'''
         if name:
-            op2_return_name()
+            ret.append((prefix, name, _SURN[delim]))
             
         if len(ret) == 0:
             # No surname: give empty name
-            return (("", None, None), )
+            return ((None, '', None), )
         return ret
 
 
@@ -354,8 +346,8 @@ class PersonName(GedcomLine):
 
 
         my_tags = [['NAME', pn.value], ['GIVN', pn.givn], ['SURN', pn.surn], ['NSFX', pn.nsfx]]
-        if hasattr(pn, 'origin'):
-            my_tags.append(['TYPE', pn.origin])
+        if hasattr(pn, 'name_type'):
+            my_tags.append(['TYPE', pn.name_type])
         elif pn.tag == 'ALIA':
             # An ALIA line with name is considered as AKA name, if not otherwise defined
             my_tags.append(['TYPE', 'aka'])
@@ -368,7 +360,7 @@ class PersonName(GedcomLine):
 
         # 1. The first row is the PersonName (inherited class from GedcomLine)
         orig_rows = [self]
-        if pn.pref_name:
+        if pn.is_preferred_name:
             # Only the person's first NAME and there the first surname 
             # carries the gedcom lines inherited from input file
             orig_rows.extend(self.rows)
@@ -392,7 +384,7 @@ class PersonName(GedcomLine):
                 if r.tag in ['NAME', 'ALIA']:
                     if re.sub(r' ', '', pn.value.lower()) != name_self: 
                         report_change(r.tag, self.value, new_value)
-                    pn.pref_name = False
+                    pn.is_preferred_name = False
                 elif r.tag == 'NSFX' and hasattr(self, 'nsfx_orig'):
                     report_change(r.tag, self.value, self.nsfx_orig)
                 continue
