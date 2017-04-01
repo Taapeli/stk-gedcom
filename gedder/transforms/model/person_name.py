@@ -217,8 +217,8 @@ class PersonName(GedcomLine):
 
 
     def _get_surname_list(self):
-        ''' Returns a list of tuples (prefix, name, sn_type) parsed from self.surn. 
-            sn_type is one of those got from _SURN. 
+        ''' Returns a list of tuples (prefix, name, name_type) parsed from self.surn. 
+            name_type is one of those got from _SURN. 
             The prefix (SPFX value like 'von') is roughly recognized by its length max 3 chrs.
             
             If a 'knows as' name is recognized, the return set has two rows, otherwise one row.
@@ -226,7 +226,7 @@ class PersonName(GedcomLine):
         
         if self.surn == "":
             # Empty surname is a surname, too
-            surnames = list(" ")
+            surnames = list('')
         else:
             # convert "(", "/" and "," to a single separator symbol " , " and remove ")"
             nm = re.sub(r'\)', '', re.sub(r' *[/,\(] *', ' , ', self.surn))
@@ -239,7 +239,7 @@ class PersonName(GedcomLine):
         self.reported_value = None
 
         ''' The Following automate reads surnames and separators from right to left
-            and stores (prefix, name, sn_type) tuples to return list ret[] 
+            and stores (prefix, name, name_type) tuples to return list ret[] 
 
             !state \ input !! ','   ! delim ! name  ! end   ! von
             |--------------++-------+-------+-------+-------+-------
@@ -250,11 +250,12 @@ class PersonName(GedcomLine):
             | 4 "von"      || 0,op7 | 2,op2 | -     | -     | 4,op6
             | - "error"    || 
             For example rule "2,op3" means operation op3 and new state 2.
-                op1: save name=nm, clear sn_type and prefix
-                op2: return (prefix, name, sn_type[delim])
-                            and saved 'known as' name
+                op1: save name=nm, clear name_type and prefix
+                op2: return (prefix, name, name_type)
+                            and possibly saved 'known as' name
                 op3: concatenate a two part name
-                op4: return (prefix, name, sn_type[delim])
+                op4: return (prefix, name, name_type)
+                            and possibly saved 'known as' name
                 op5: create prefix
                 op6: concatenate a two part prefix
                 op7: save a 'know as' name
@@ -263,26 +264,25 @@ class PersonName(GedcomLine):
 
         for nm in reversed(surnames):
             if state == 0 or state == 2:        # Start state: Only a name expected
-                ''''op1: save name=nm, clear sn_type and prefix'''
+                ''''op1: save name=nm, clear name_type and prefix'''
                 name = nm.capitalize()
-                prefix = delim = None
+                prefix = name_type = None
                 state = 1
             elif state == 1 or state == 4:      # Possible separator state / 
                                                 # left side name has been stored
                 if nm == ',':
-                    ''''op7: A 'known as' name; to be returned later'''
+                    ''''op7: Create a 'known as' name to be returned later'''
                     known_as = (prefix, name.capitalize(), _SURN[nm])
-                    prefix = None
                     state = 0
                 elif nm in _SURN: # a delimiter
                     ''''op2: Output PersonName rows'''
-                    ret.append((prefix, name, _SURN[delim]))
+                    ret.append((prefix, name, name_type))
                     if known_as:
                         ret.append(known_as)
                         known_as = None
                     prefix = None
                     name = ''
-                    delim = nm
+                    name_type = _SURN[nm]
                     state = 2
                 elif len(nm) < 4 and not '.' in nm: # von
                     ''''op5/op6: Create or concatenate prefix'''
@@ -297,8 +297,10 @@ class PersonName(GedcomLine):
 
         ''''op4: End: output the last name'''
         if name:
-            ret.append((prefix, name, _SURN[delim]))
-            
+            ret.append((prefix, name, name_type))
+            if known_as:
+                ret.append(known_as)
+
         if len(ret) == 0:
             # No surname: give empty name
             return ((None, '', None), )

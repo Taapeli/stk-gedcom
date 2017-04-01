@@ -54,6 +54,7 @@ class GedcomRecord(GedcomLine):
         '''
         if type(gedline) is PersonName:
             # gedline is "1 NAME ...". The first one is the preferred name
+            # gedline can also be "1 ALIA ...",
             gedline.is_preferred_name = (self.currname < 0)
 #             print("#record row({}) <= {} (name {!r})".format(len(self.rows), gedline.path, gedline.name), file=stderr)
             self.currname = len(self.rows)
@@ -71,7 +72,7 @@ class GedcomRecord(GedcomLine):
         for obj in self.rows: 
             if isinstance(obj, PersonName):
                 # Each NAME row generated from /surname1, surname2/
-                for x in obj.get_person_rows(): 
+                for x in obj.get_person_rows():
                     f.emit(str(x))
             else:
                 # A GedcomLine outside NAME and its descendants
@@ -118,7 +119,7 @@ if __name__ == '__main__':
     my_record_4.add_member(my_name)
     my_name = PersonName(GedcomLine('1 ALIA Jouto-Janne'))
     my_record_4.add_member(my_name)
-    args = Namespace(nolog=False, output_gedcom='out.txt', encoding='UTF-8', dryrun=False)
+    args = Namespace(nolog=False, output_gedcom='../../out.txt', encoding='UTF-8', dryrun=False)
     with Output(args) as f:
         GedcomLine("0 HEAD").emit(f)
         my_record_1.emit(f)
