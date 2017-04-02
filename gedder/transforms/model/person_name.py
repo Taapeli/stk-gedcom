@@ -5,6 +5,7 @@ Created on 22.11.2016
 '''
 
 import re
+import sys
 import logging
 LOG = logging.getLogger(__name__)
 
@@ -45,7 +46,7 @@ class PersonName(GedcomLine):
 
     def __init__(self, gedline):
         ''' Creates a new instance on person name definition from a '1 NAME' row.
-            The arguments must be a NAME or ALIA gedcom line with person name.
+            The arguments must be a NAME gedcom line with person name.
         '''
 #       Example: GedLine{
 #         path='@I0001@.NAME'
@@ -61,7 +62,8 @@ class PersonName(GedcomLine):
             GedcomLine.__init__(self, (gedline.level, gedline.tag, gedline.value))
         else:
             GedcomLine.__init__(self, gedline)
-
+        # For ALIA line the tag may be changed later
+        self.tag_orig = self.tag
 
     def add_line(self, gedline):
         ''' Adds a new, descendant row with higher level number to person name structure
@@ -75,15 +77,17 @@ class PersonName(GedcomLine):
         self.rows.append(gedline)
 
 
-    def get_person_rows(self): 
-        ''' Analyze this NAME and return it's GedcomLines:
-            first NAME and then the descendant rows in the level hierarchy.
+    def get_person_rows(self, name_default): 
+        ''' Analyze this NAME and return it's GedcomLines: first NAME and 
+            then the descendant rows in the level hierarchy.
+            Attribute name_default may be a PersonName, 
+            who's given name is used in place of a missing givn.
+
             The rules about merging original and generated values should be applied here
             
-            #TODO: Onko ALIA nimi parsittava eri tavalla kuin muut? Esim. "1 ALIA Nätti-Jussi".
-            #TODO: If there is no '/', don't output givn, surn, ... lines
+            #TODO: If there is no '/', don't output givn, surn, ... lines ??
         '''
-        
+
         ''' 1) Full name parts like 'givn/surn/nsfx' will be isolated and analyzed '''
         # Split 'ginv/surn/nsfx' from NAME line
         s1 = self.value.find('/')
@@ -99,7 +103,7 @@ class PersonName(GedcomLine):
             self.nsfx = ''
             
         ''' 1.1) GIVN given name part rules '''
-        self._evaluate_givn()
+        self._evaluate_givn(name_default)
         ''' 1.2) nsfx Suffix part: nothing to do? '''
         pass
         ''' 1.3) SURN Surname part: pick each surname as a new PersonName
@@ -117,7 +121,7 @@ class PersonName(GedcomLine):
         return ret
 
     
-    def _evaluate_givn(self):
+    def _evaluate_givn(self, name_default=None):
         ''' Process given name part of NAME record '''
 
         def _match_patronyme(nm):
@@ -167,7 +171,20 @@ class PersonName(GedcomLine):
                     # Given names without nick name
                     self.givn = re.sub(r" *\(.*\) *", " ", self.givn).rstrip()
         else:
-            self.givn = _NONAME
+            if name_default and name_default.givn and name_default.givn != _NONAME:
+                # Use defaults descended GIVN, NDFX, NICK, and _CALL
+                print("#{} tarkasta: {!r} päteekö etunimi '{}'".\
+                      format(self.path, self.value, name_default.givn))
+                LOG.info("#{} tarkasta: {!r} päteekö etunimi '{}'".\
+                         format(self.path, self.value, name_default.givn))
+                self.givn = name_default.givn
+                if hasattr(name_default, 'nick_name'):
+                    self.nick_name = name_default.nick_name
+                self.nsfx = name_default.nsfx
+                if hasattr(name_default, 'call_name'):
+                    self.call_name = name_default.call_name
+            else:
+                self.givn = _NONAME
 
 
     def _extract_surnames(self):
@@ -197,7 +214,7 @@ class PersonName(GedcomLine):
             pn.surn = nm
             pn.givn = self.givn
             pn.nsfx = self.nsfx
-            if self.tag == 'ALIA':
+            if self.tag_orig == 'ALIA':
                 sn_type = _SURN[',']
             if hasattr(self,'nsfx_org'):
                 pn.nsfx_orig = self.nsfx_orig
@@ -350,9 +367,9 @@ class PersonName(GedcomLine):
         my_tags = [['NAME', pn.value], ['GIVN', pn.givn], ['SURN', pn.surn], ['NSFX', pn.nsfx]]
         if hasattr(pn, 'name_type'):
             my_tags.append(['TYPE', pn.name_type])
-        elif pn.tag == 'ALIA':
-            # An ALIA line with name is considered as AKA name, if not otherwise defined
-            my_tags.append(['TYPE', 'aka'])
+#         elif pn.tag_orig == 'ALIA':
+#             # An ALIA line with name is considered as AKA name, if not otherwise defined
+#             my_tags.append(['TYPE', 'aka'])
         if hasattr(pn, 'call_name'):
             my_tags.append(['NOTE', '_CALL ' + pn.call_name])
         if hasattr(pn, 'nick_name'):
@@ -383,7 +400,7 @@ class PersonName(GedcomLine):
                       format(r.path, len(pn.rows), r.tag, new_value))
                 pn.rows.append(GedcomLine((r.level, r.tag, new_value)))
                 # Show NAME differences 
-                if r.tag in ['NAME', 'ALIA']:
+                if r.tag == 'NAME':
                     if re.sub(r' ', '', pn.value.lower()) != name_self: 
                         report_change(r.tag, self.value, new_value)
                     pn.is_preferred_name = False
@@ -397,7 +414,7 @@ class PersonName(GedcomLine):
 
         # 3 Create new rows for unused tags (except trivial ones)
         for tag, value in my_tags:
-            if value and not tag in ('GIVN', 'SURN'):
+            if value and not tag in ('NAME', 'GIVN', 'SURN'):
                 LOG.debug("#{:>36} new  row[{}] {} {!r}".\
                       format("{}.{}".format(self.path, tag), len(pn.rows), tag, value))
                 pn.rows.append(GedcomLine((pn.level + 1, tag, value)))

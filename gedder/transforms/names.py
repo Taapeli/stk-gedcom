@@ -31,7 +31,7 @@ Created on 26.11.2016
 #           1 SEX M
 #             ...
 
-#from transforms.model.gedcom_line import GedcomLine
+from transforms.model.gedcom_line import GedcomLine
 from transforms.model.gedcom_record import GedcomRecord
 from transforms.model.person_name import PersonName
 
@@ -84,7 +84,7 @@ def phase3(args, gedline, f):
     if gedline.level == 0:
         if gedline.value == 'INDI':  # Start new INDI
             # "0 INDI" starts a new logical record
-            _T1_emit_and_start_record(gedline, f)
+            _T1_emit_and_create_record(gedline, f)
             state = 1
         else:
             # 0 level line ends previous logical record, if any and
@@ -101,7 +101,7 @@ def phase3(args, gedline, f):
 
     if state == 1:      # INDI processing active
         if gedline.level == 1:
-            if _gedline_is_a_NAME(gedline):
+            if _is_gedline_a_NAME(gedline):
                 # Start a new PersonName in GedcomRecord
                 _T4_store_name(gedline)
                 state = 2
@@ -117,7 +117,7 @@ def phase3(args, gedline, f):
     if state == 2:      # NAME processing active in INDI
         if gedline.level == 1:
             # Level 1 lines terminate current NAME group
-            if _gedline_is_a_NAME(gedline):
+            if _is_gedline_a_NAME(gedline):
                 # Start a new PersonName in GedcomRecord
                 _T4_store_name(gedline)
                 state = 2
@@ -139,7 +139,7 @@ def phase3(args, gedline, f):
             state = 1
             return
         if gedline.level == 1:
-            if _gedline_is_a_NAME(gedline):
+            if _is_gedline_a_NAME(gedline):
                 # Start a new PersonName in GedcomRecord
                 _T4_store_name(gedline)
                 state = 2
@@ -151,7 +151,8 @@ def phase3(args, gedline, f):
         _T6_store_member(gedline)
         return
 
-'''# ---- Automation rules ----
+'''
+# ---- Automation rules ----
 #                             1 ALIA
 # state \input!!0 INDI!0 ... !1 NAME !1 BIRT !2 DATE !2,3,4, !1 ... ! end
 #-------------++------+------+-------+-------+-------+------+-----
@@ -162,7 +163,7 @@ def phase3(args, gedline, f):
  For example rule "2,T4" means operation T4 and new state 2.
 '''
 
-def _T1_emit_and_start_record(gedline, f):
+def _T1_emit_and_create_record(gedline, f):
     ''' Emit previous logical person record (if any) and create a new one '''
     global indi_record
     if indi_record != None:
@@ -186,7 +187,14 @@ def _T3_emit_gedline(gedline, f):
 def _T4_store_name(gedline):
     ''' Save gedline as a new PersonName to the logical person record '''
     global indi_record
-    nm = PersonName(gedline)
+    if gedline.tag == 'ALIA':
+        # For an ALIA line: 1) Change tag to 'NAME' 2) add line '_orig_ALIA'
+        nm = PersonName(gedline)
+        nm.tag = 'NAME'
+        noteline = GedcomLine((gedline.level + 1, 'NOTE', '_orig_ALIA' + gedline.value))
+        nm.add_line(noteline)
+    else: # Real 'NAME'
+        nm = PersonName(gedline)
     indi_record.add_member(nm)
 
 def _T5_save_date(gedline, tag):
@@ -206,8 +214,8 @@ def _T7_store_name_member(gedline):
     indi_record.get_nameobject().add_line(gedline)
 
 
-def _gedline_is_a_NAME(gedline):
-    ''' Check if this is a NAME line or a ALIA line with no @I000@ reference.
+def _is_gedline_a_NAME(gedline):
+    ''' Check if this is a NAME line or a ALIA line with no @...@ reference.
         (This kind of ALIA will be changed to NAME when outputting PersonName)
     '''
     return gedline.tag == 'NAME' or \
