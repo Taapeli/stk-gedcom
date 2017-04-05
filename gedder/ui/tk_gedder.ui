@@ -3,6 +3,7 @@
   <object class="tk.Toplevel" id="mainwindow">
     <property name="height">200</property>
     <property name="relief">groove</property>
+    <property name="resizable">horizontally</property>
     <property name="takefocus">true</property>
     <property name="title" translatable="yes">Gedcom-muokkain</property>
     <property name="width">300</property>
@@ -14,6 +15,19 @@
           <property name="column">0</property>
           <property name="propagate">True</property>
           <property name="row">0</property>
+          <columns>
+            <column id="0">
+              <property name="pad">5</property>
+            </column>
+            <column id="2">
+              <property name="pad">5</property>
+            </column>
+          </columns>
+          <rows>
+            <row id="0">
+              <property name="pad">10</property>
+            </row>
+          </rows>
         </layout>
         <child>
           <object class="ttk.Label" id="label_1">
@@ -50,24 +64,26 @@
     <child>
       <object class="ttk.Frame" id="Frame_2">
         <property name="height">200</property>
-        <property name="width">200</property>
         <layout>
           <property name="column">0</property>
+          <property name="ipadx">0</property>
+          <property name="ipady">0</property>
+          <property name="pady">0</property>
           <property name="propagate">True</property>
           <property name="row">1</property>
         </layout>
         <child>
           <object class="ttk.Notebook" id="Notebook_1">
             <property name="height">200</property>
-            <property name="width">200</property>
+            <property name="width">350</property>
             <layout>
               <property name="column">0</property>
               <property name="propagate">True</property>
               <property name="row">0</property>
             </layout>
             <child>
-              <object class="ttk.Notebook.Tab" id="Alku">
-                <property name="text" translatable="yes">Tab_1</property>
+              <object class="ttk.Notebook.Tab" id="Tab_alku">
+                <property name="text" translatable="yes">Alku-välilehti</property>
                 <child>
                   <object class="ttk.Frame" id="Frame_4">
                     <property name="height">200</property>
@@ -100,15 +116,106 @@
                         </layout>
                       </object>
                     </child>
+                    <child>
+                      <object class="ttk.Frame" id="Frame_5">
+                        <property name="height">200</property>
+                        <property name="width">200</property>
+                        <layout>
+                          <property name="column">0</property>
+                          <property name="propagate">True</property>
+                          <property name="row">2</property>
+                        </layout>
+                        <child>
+                          <object class="ttk.Label" id="Label_encoding">
+                            <property name="justify">left</property>
+                            <property name="padding">5</property>
+                            <property name="text" translatable="yes">Syötteen merkistö</property>
+                            <layout>
+                              <property name="column">0</property>
+                              <property name="propagate">True</property>
+                              <property name="row">0</property>
+                            </layout>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="ttk.Combobox" id="Combo_encoding">
+                            <property name="exportselection">true</property>
+                            <property name="height">1</property>
+                            <property name="values">"UTF-8" "ISO8859-1"</property>
+                            <property name="width">12</property>
+                            <layout>
+                              <property name="column">1</property>
+                              <property name="propagate">True</property>
+                              <property name="row">0</property>
+                            </layout>
+                          </object>
+                        </child>
+                      </object>
+                    </child>
                   </object>
                 </child>
               </object>
             </child>
             <child>
-              <object class="ttk.Notebook.Tab" id="Nimet">
-                <property name="text" translatable="yes">Tab_2</property>
+              <object class="ttk.Notebook.Tab" id="Tab_nimet">
+                <property name="text" translatable="yes">Nimet-välilehti</property>
               </object>
             </child>
+            <child>
+              <object class="ttk.Notebook.Tab" id="Tab_paikat">
+                <property name="text" translatable="yes">Paikat-välilehti</property>
+              </object>
+            </child>
+          </object>
+        </child>
+      </object>
+    </child>
+    <child>
+      <object class="ttk.Frame" id="Frame_3">
+        <property name="height">200</property>
+        <property name="width">200</property>
+        <layout>
+          <property name="column">0</property>
+          <property name="propagate">True</property>
+          <property name="row">2</property>
+          <property name="sticky">e</property>
+        </layout>
+        <child>
+          <object class="ttk.Button" id="Run_button">
+            <property name="text" translatable="yes">Suorita</property>
+            <layout>
+              <property name="column">1</property>
+              <property name="padx">5</property>
+              <property name="pady">5</property>
+              <property name="propagate">True</property>
+              <property name="row">0</property>
+            </layout>
+          </object>
+        </child>
+        <child>
+          <object class="ttk.Button" id="Revert_button">
+            <property name="text" translatable="yes">Peruuta</property>
+            <layout>
+              <property name="column">2</property>
+              <property name="ipadx">0</property>
+              <property name="ipady">0</property>
+              <property name="padx">0</property>
+              <property name="pady">5</property>
+              <property name="propagate">True</property>
+              <property name="row">0</property>
+            </layout>
+          </object>
+        </child>
+        <child>
+          <object class="ttk.Button" id="Button_4">
+            <property name="state">disabled</property>
+            <property name="text" translatable="yes">Loki</property>
+            <layout>
+              <property name="column">3</property>
+              <property name="padx">5</property>
+              <property name="propagate">True</property>
+              <property name="row">0</property>
+            </layout>
           </object>
         </child>
       </object>

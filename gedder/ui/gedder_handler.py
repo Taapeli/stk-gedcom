@@ -50,7 +50,7 @@ class Handler:
         self.transformer = None
         self.input_gedcom = None
         self.run_args = run_args
-        self.loglevel = LOG.INFO
+        self.loglevel = 20  # INFO
 
         self.builder = Gtk.Builder()
         self.builder.add_from_file("ui/Gedder.glade")
