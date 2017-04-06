@@ -211,14 +211,14 @@ class PersonName(GedcomLine):
         for prefix, nm, sn_type in self._get_surname_list():
             name = '{}/{}/{}'.format(self.givn, nm.strip(), self.nsfx)
             pn = PersonName((self.level, 'NAME', name))
-            pn.surn = nm
+            pn.surn = nm                #TODO: self.surn or nm?
             pn.givn = self.givn
             pn.nsfx = self.nsfx
-            if self.tag_orig == 'ALIA':
+            if self.tag_orig == 'ALIA': #TODO: check TYPE row of self
                 sn_type = _SURN[',']
             if hasattr(self,'nsfx_org'):
                 pn.nsfx_orig = self.nsfx_orig
-            if hasattr(self,'call_name'):
+            if hasattr(self,'call_name'):       #TODO: call_name has not been copied from name_default
                 pn.call_name = self.call_name
             if hasattr(self,'nick_name'):
                 pn.nick_name = self.nick_name
@@ -365,24 +365,24 @@ class PersonName(GedcomLine):
 
 
         my_tags = [['NAME', pn.value], ['GIVN', pn.givn], ['SURN', pn.surn], ['NSFX', pn.nsfx]]
-        if hasattr(pn, 'name_type'):
+        if hasattr(pn, 'name_type'):        #TODO: or a TYPE row found in self.rows
             my_tags.append(['TYPE', pn.name_type])
 #         elif pn.tag_orig == 'ALIA':
 #             # An ALIA line with name is considered as AKA name, if not otherwise defined
 #             my_tags.append(['TYPE', 'aka'])
-        if hasattr(pn, 'call_name'):
+        if hasattr(pn, 'call_name'):       #TODO: or a NOTE _CALL row found in self.rows
             my_tags.append(['NOTE', '_CALL ' + pn.call_name])
-        if hasattr(pn, 'nick_name'):
+        if hasattr(pn, 'nick_name'):       #TODO: or a NICK row found in self.rows
             my_tags.append(['NICK', pn.nick_name])
-        if hasattr(pn, 'prefix'):
+        if hasattr(pn, 'prefix'):       #TODO: or a SPFX row found in self.rows
             my_tags.append(['SPFX', pn.prefix])
 
         # 1. The first row is the PersonName (inherited class from GedcomLine)
         orig_rows = [self]
-        if pn.is_preferred_name:
+#         if pn.is_preferred_name:
             # Only the person's first NAME and there the first surname 
             # carries the gedcom lines inherited from input file
-            orig_rows.extend(self.rows)
+        orig_rows.extend(self.rows)
         # For name comparison
         name_self = re.sub(r'[ \*]', '', self.value).lower()
 
@@ -418,3 +418,20 @@ class PersonName(GedcomLine):
                 LOG.debug("#{:>36} new  row[{}] {} {!r}".\
                       format("{}.{}".format(self.path, tag), len(pn.rows), tag, value))
                 pn.rows.append(GedcomLine((pn.level + 1, tag, value)))
+
+# Keskeneräinen idea, olisikohan tarpeen, toimisikohan?
+#
+#     def _evaluate_attribute(self, key, attr):
+#         ''' Looks up a value for an attribute from a) self.rows[] or b) local attributes of self.
+#             Returns the value and removes the row, if used
+#             #TODO: Which one is preferred?
+#         '''
+#         # Find a row having te key
+#         for i in self.rows:
+#             if str(i)[2:].startswith(key):
+#                 value = i.value
+#                 #TODO: Remove the row
+#                 
+#         # Find the local attr of the key
+#         value = getattr(self, attr, None)
+#         return value
