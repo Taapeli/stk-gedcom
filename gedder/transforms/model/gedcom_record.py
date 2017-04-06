@@ -34,7 +34,9 @@ class GedcomRecord(GedcomLine):
         # optional attributes {'BIRT':1820}
         self.attributes = {}
         # Latest PersonName index in self.rows
-        self.currname = -1
+        self.current_index = -1
+        # The name found first, userd for default GIVN, _CALL, NICK
+        self.name_default = None
         # Store level 0 line
         if not type(gedline) is GedcomLine:
             raise RuntimeError("GedcomLine argument expected")
@@ -54,10 +56,13 @@ class GedcomRecord(GedcomLine):
         '''
         if type(gedline) is PersonName:
             # gedline is "1 NAME ...". The first one is the preferred name
-            gedline.pref_name = (self.currname < 0)
+            gedline.is_preferred_name = (self.current_index < 0)
 #             print("#record row({}) <= {} (name {!r})".format(len(self.rows), gedline.path, gedline.name), file=stderr)
-            self.currname = len(self.rows)
+            self.current_index = len(self.rows)
             self.rows.append(gedline)
+            if gedline.tag == 'NAME' and not self.name_default:
+                # Save the first NAME occurrence
+                self.name_default = self.get_nameobject()
         else:
 #             print("#record row({}) <= {} ({!r})".format(len(self.rows), gedline.path, gedline.value), file=stderr)
             self.rows.append(gedline)
@@ -71,7 +76,7 @@ class GedcomRecord(GedcomLine):
         for obj in self.rows: 
             if isinstance(obj, PersonName):
                 # Each NAME row generated from /surname1, surname2/
-                for x in obj.get_person_rows(): 
+                for x in obj.get_person_rows(self.name_default):
                     f.emit(str(x))
             else:
                 # A GedcomLine outside NAME and its descendants
@@ -87,15 +92,15 @@ class GedcomRecord(GedcomLine):
 
     def get_nameobject(self):
         ''' Returns the latest object of type PersonName '''
-        if self.currname >= 0:
-            return self.rows[self.currname]
+        if self.current_index >= 0:
+            return self.rows[self.current_index]
 
 
 if __name__ == '__main__':
     # Test set
     from transforms.model.ged_output import Output
     from argparse import Namespace
-    logging.basicConfig(filename='example.log',level=logging.INFO, format='%(levelname)s:%(message)s')
+    logging.basicConfig(filename='example.log', level=logging.DEBUG, format='%(levelname)s:%(message)s')
     LOG.info("------ Ajo '%s' alkoi %s", "Testi", datetime.datetime.now().strftime('%a %Y-%m-%d %H:%M:%S') + " ------")
 
     # One person with two NAME lines
@@ -116,9 +121,13 @@ if __name__ == '__main__':
     my_record_4 = GedcomRecord(GedcomLine('0 @I4@ INDI'))
     my_name = PersonName(GedcomLine('1 NAME Janne/Mattila (Matts)/'))
     my_record_4.add_member(my_name)
-    my_name = PersonName(GedcomLine('1 ALIA Jouto-Janne'))
+    my_name = PersonName(GedcomLine('1 NAME /Matiainen/'))
+    my_name.add_line(GedcomLine('2 SOUR Kuulopuhe'))
     my_record_4.add_member(my_name)
-    args = Namespace(nolog=False, output_gedcom='out.txt', encoding='UTF-8', dryrun=False)
+    my_name = PersonName(GedcomLine('1 NAME Jouto-Janne'))
+    my_name.add_line(GedcomLine('2 NOTE _orig_ALIA Jouto-Janne'))
+    my_record_4.add_member(my_name)
+    args = Namespace(nolog=False, output_gedcom='../../out.txt', encoding='UTF-8', dryrun=False)
     with Output(args) as f:
         GedcomLine("0 HEAD").emit(f)
         my_record_1.emit(f)
