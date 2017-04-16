@@ -19,6 +19,7 @@ Created on 6.3.2017
 
 import os 
 import gi
+from re import match
 gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk, Pango, Gdk
 import logging
@@ -78,7 +79,7 @@ class Handler:
     def on_opNotebook_switch_page (self, notebook, page, page_num, data=None):
         ''' Valittu välilehti määrää toiminnon 
         '''
-        opers = (None, "names", "places", "marriages", "hiskisources", "kasteet")
+        opers = (None, "names", "places", "marriages", "hiskisources", "kasteet", "lahdeviitteet")
         self.op_selected = None
         
         self.tab = notebook.get_nth_page(page_num)
@@ -181,13 +182,47 @@ class Handler:
 
     def inputFilechooser_set(self, button):
         ''' The user has selected a file '''
+        def _get_fileInfo(filename):
+            combo = self.builder.get_object("combo_encoding")
+            enc = combo.get_active_text()
+
+            try:
+                f = open(filename, 'r', encoding=enc)
+                msg = []
+                for i in range(100):
+                    ln = f.readline()
+                    if ln.startswith('1 SOUR'):
+                        msg.append('Source ')
+                    if ln.startswith('2 VERS'):
+                        msg.append(ln[2:])
+                    if ln.startswith('1 GEDC'):
+                        msg.append('Gedcom ')
+                    if ln.startswith('1 NAME'):
+                        msg.append(ln[2:])
+                    if ln.startswith('1 CHAR'):
+                        msg.append(ln[2:])
+                    if match('0.*SUBM', ln):
+                        msg.append('Submitter ')
+                    if match('0.*INDI', ln):
+                        break
+                return ''.join(msg)
+            except UnicodeDecodeError as e:
+                return "Väärä merkistö, kokeile toisella"
+            except Exception as e:
+                return type(e).__name__ + str(e)
+                
         global input_gedcom
         name = button.get_filename()
         if name:
             input_gedcom = name
             setattr(self.run_args, 'input_gedcom', input_gedcom)
             self.message_id = self.st.push(self.st_id, "Syöte " + input_gedcom)
+            info = self.builder.get_object("fileInfo")
+            msg = _get_fileInfo(input_gedcom)
+            info.set_text(msg)
+
             self.activate_run_button()
+            
  
     def on_file_open_activate(self, menuitem, data=None):
         ''' Same as inputFilechooser_file_set_cb - not actually needed '''

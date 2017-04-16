@@ -5,7 +5,7 @@ Created on 22.11.2016
 '''
 
 import re
-import sys
+#import sys
 import logging
 LOG = logging.getLogger(__name__)
 
@@ -64,6 +64,7 @@ class PersonName(GedcomLine):
             GedcomLine.__init__(self, gedline)
         # For ALIA line the tag may be changed later
         self.tag_orig = self.tag
+
 
     def add_line(self, gedline):
         ''' Adds a new, descendant row with higher level number to person name structure
@@ -173,9 +174,9 @@ class PersonName(GedcomLine):
         else:
             if name_default and name_default.givn and name_default.givn != _NONAME:
                 # Use defaults descended GIVN, NDFX, NICK, and _CALL
-                print("#{} tarkasta: {!r} päteekö etunimi '{}'".\
+                print("{} tarkasta: {!r} päteekö etunimi '{}'".\
                       format(self.path, self.value, name_default.givn))
-                LOG.info("#{} tarkasta: {!r} päteekö etunimi '{}'".\
+                LOG.info("{} tarkasta: {!r} päteekö etunimi '{}'".\
                          format(self.path, self.value, name_default.givn))
                 self.givn = name_default.givn
                 if hasattr(name_default, 'nick_name'):
