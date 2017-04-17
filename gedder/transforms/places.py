@@ -113,7 +113,7 @@ def read_parishes(parishfile):
         line = line.strip()
         if line == "":
             continue
-        num,name = line.split(None,1)
+        _num, name = line.split(None,1)
         for x in name.split("-"):
             name2 = x.strip().lower()
             parishes.add(auto_combine(name2))
@@ -200,7 +200,8 @@ def process_place(args,place):
  
 
 
-def check(input,expected_output,reverse=False,add_commas=False,ignore_lowercase=False,ignore_digits=False):
+def check(in_file, expected_output, reverse=False, add_commas=False, 
+          ignore_lowercase=False, ignore_digits=False):
     class Args: pass
     args = Args()
     args.reverse = reverse
@@ -214,9 +215,9 @@ def check(input,expected_output,reverse=False,add_commas=False,ignore_lowercase=
     args.minlen = 0
     args.match = None
  
-    newplace = process_place(args,input)
+    newplace = process_place(args,in_file)
     if newplace != expected_output:
-        print("{}: expecting '{}', got '{}'".format(input,expected_output,newplace))
+        print("{}: expecting '{}', got '{}'".format(in_file, expected_output, newplace))
         
 
 def test():

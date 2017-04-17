@@ -158,14 +158,16 @@ def get_transforms():
 
 def find_transform(prefix):
     choices = []
-    for modname,transformer,docline,version in get_transforms():
-        if modname == prefix: return transformer
+    for modname, transformer, _docline, _version in get_transforms():
+        if modname == prefix: 
+            return transformer
         if modname.startswith(prefix):
-            choices.append((modname,transformer))
-    if len(choices) == 1: return choices[0][1]
+            choices.append((modname, transformer))
+    if len(choices) == 1: 
+        return choices[0][1]
     if len(choices) > 1: 
         LOG.error("Ambiguous transform name: {}".format(prefix))
-        LOG.error("Matching names: {}".format(",".join(name for name,t in choices)))
+        LOG.error("Matching names: {}".format(",".join(name for name, _ in choices)))
     return False
 
 

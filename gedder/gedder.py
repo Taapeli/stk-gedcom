@@ -37,7 +37,7 @@ run_args = Namespace(# Global options
                      auto_combine=False, 
                      match='', 
                      parishfile="static/seurakunnat.txt", 
-                     villagefile="static/seurakunnat.txt")
+                     villagefile="static/kylat.txt")
 
 
 def get_transform(name):
@@ -48,7 +48,7 @@ def get_transform(name):
 
     filename = "transforms/" + name + ".py"
     if os.path.exists(filename):
-        transformer = importlib.import_module("transforms."+name)
+        transformer = importlib.import_module("transforms." + name)
         doc = transformer.__doc__
         if doc:
             docline = doc.strip().splitlines()[0]
