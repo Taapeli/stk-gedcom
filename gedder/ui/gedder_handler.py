@@ -19,13 +19,13 @@ Created on 6.3.2017
 
 import os 
 import gi
+from re import match
 gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk, Pango, Gdk
 import logging
 import gedcom_transform
 
 _LOGFILE="transform.log"
-input_gedcom = None
 
 # Show menu in application window, not on the top of Ubuntu desktop
 os.environ['UBUNTU_MENUPROXY']='0'
@@ -43,9 +43,7 @@ LOG = logging.getLogger('gedder')
 class Handler:
 
     def __init__(self, run_args, get_transform):
-#         global transformer
-#         global input_gedcom
-#         global run_args
+        ''' Prepare Glade UI '''
         self.get_transform_func = get_transform
         self.transformer = None
         self.input_gedcom = None
@@ -78,7 +76,7 @@ class Handler:
     def on_opNotebook_switch_page (self, notebook, page, page_num, data=None):
         ''' Valittu välilehti määrää toiminnon 
         '''
-        opers = (None, "names", "places", "marriages", "hiskisources", "kasteet")
+        opers = (None, "names", "places", "marriages", "hiskisources", "kasteet", "lahdeviitteet")
         self.op_selected = None
         
         self.tab = notebook.get_nth_page(page_num)
@@ -98,6 +96,9 @@ class Handler:
                 self.st.push(self.st_id, "Transform not found; use -l to list the available transforms")
         elif self.message_id:
             self.message_id = self.st.pop(self.message_id)
+        # Redraw file info on page 0
+        if page_num == 0:
+            self.show_fileInfo()
         
     def on_runButton_clicked(self, button):
         ''' Open log file and run the selected transformation '''
@@ -115,6 +116,7 @@ class Handler:
         self.on_showButton_clicked(button)
         
     def on_revertButton_clicked(self, button):
+        #TODO: peru muutokset kopioimalla viimeisin talletettu syöte uusimmaksi
         self.st.push(self.st_id, "Painettu: " + button.get_label())
         rev = self.builder.get_object("revertButton")
         rev.set_sensitive(False)
@@ -163,35 +165,45 @@ class Handler:
         self.disp_window.destroy()
 
     def on_combo_encoding_changed(self, combo):
+        ''' Set input gedcom file encoding and show file info '''
         global run_args
-        value = combo.get_active_text()
+        treeiter = combo.get_active_iter()
+        model = combo.get_model()
+        value = (model[treeiter][0])
+        #value = combo.get_active_text()
         self.run_args.__setattr__('encoding', value)
         self.st.push(self.st_id, "Valittu merkistö " + value)
+        self.show_fileInfo()
     
     def on_combo_logging_changed(self, combo):
+        ''' #TODO: Set loggind level '''
         value = combo.get_active_id()
         self.loglevel = int(value)
 #         LOG.setLevel(int(value))
         self.st.push(self.st_id, "Lokitaso " + logging.getLevelName(value))
 
     def on_checkbutton_toggled(self, checkButton):
+        ''' Fire checkbutton change: #TODO: what to do? '''
         self.st.push(self.st_id, "Painettu: " + checkButton.get_label())
         rev = self.builder.get_object("revertButton")
         rev.set_sensitive(False)
+        
+    def on_fileInfo_show(self, label):
+        ''' Not in use? '''
+        print(str(label))
 
-    def inputFilechooser_set(self, button):
+    def on_inputFilechooser_file_set(self, button):
         ''' The user has selected a file '''
-        global input_gedcom
         name = button.get_filename()
         if name:
-            input_gedcom = name
-            setattr(self.run_args, 'input_gedcom', input_gedcom)
-            self.message_id = self.st.push(self.st_id, "Syöte " + input_gedcom)
+            self.input_gedcom = name
+            setattr(self.run_args, 'input_gedcom', self.input_gedcom)
+            self.message_id = self.st.push(self.st_id, "Syöte " + self.input_gedcom)
             self.activate_run_button()
+            self.show_fileInfo()
  
     def on_file_open_activate(self, menuitem, data=None):
-        ''' Same as inputFilechooser_file_set_cb - not actually needed '''
-        global input_gedcom
+        ''' Prepare file chooser for .ged input files '''
         self.dialog = Gtk.FileChooserDialog("Open...",
             self.window,
             Gtk.FileChooserAction.OPEN,
@@ -200,19 +212,53 @@ class Handler:
             )
         self.response = self.dialog.run()
         if self.response == Gtk.ResponseType.OK:
-            input_gedcom = self.dialog.get_filename()
-            setattr(self.run_args, 'input_gedcom', input_gedcom)
-            self.message_id = self.st.push(self.st_id, "Syöte " + input_gedcom)
+            self.input_gedcom = self.dialog.get_filename()
+            setattr(self.run_args, 'input_gedcom', self.input_gedcom)
+            self.message_id = self.st.push(self.st_id, "Syöte " + self.input_gedcom)
             self.activate_run_button()
             self.dialog.destroy()
         else:
             self.st.push(self.st_id, "Outo palaute {}".format(self.response))
 
+    def show_fileInfo(self):
+        ''' Read gedcom HEAD info and display it '''
+        combo = self.builder.get_object("combo_encoding")
+        enc = combo.get_active_text()
+        info = self.builder.get_object("fileInfo")
+        if not self.input_gedcom:
+            info.set_text("Valitse tiedosto")
+            return
+        
+        msg = []
+        msg.append(os.path.basename(self.input_gedcom) + '\n\n')
+        try:
+            with open(self.input_gedcom, 'r', encoding=enc) as f:
+                for _ in range(100):
+                    ln = f.readline()
+                    if ln[:6] in ['2 VERS', '1 NAME', '1 CHAR']:
+                        msg.append(ln[2:])
+                    if ln.startswith('1 SOUR'):
+                        msg.append('Source ' + ln[7:-1] + ' ')
+                    if ln.startswith('1 GEDC'):
+                        msg.append('Gedcom ')
+                    if ln.startswith('2 CONT _COMMAND'):
+                        msg.append('– ' + ln[16:-1])
+                    if ln.startswith('2 CONT _DATE'):
+                        msg.append(ln[13:])
+                    if match('0.*SUBM', ln):
+                        msg.append('Submitter ')
+                    if match('0.*INDI', ln):
+                        break
+        except UnicodeDecodeError as e:
+            msg.append("Väärä merkistö, kokeile toisella")
+        except Exception as e:
+            msg.append( type(e).__name__ + str(e))
+        info.set_text( ''.join(msg))
+                
     def activate_run_button(self):
         ''' If file and operation are choosen '''
-        global input_gedcom
         runb = self.builder.get_object("runButton")
-        if input_gedcom and self.transformer: 
+        if self.input_gedcom and self.transformer: 
             runb.set_sensitive(True)
         else: 
             runb.set_sensitive(False)

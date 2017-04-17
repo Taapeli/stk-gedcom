@@ -1,28 +1,42 @@
+#!/usr/bin/env python3
 '''
+Muodostaa yhdistetyistä lähdeviitteistä nimetyt lähteet ja sivunumerot 
+
 Created on 17.2.2017
 
 @author: TimNal
 
 Ohjelman perusteet:
 
-            Brothers Keeper -ohjelmalla tuotetussa gedcom-aineistossa on viittauksia lähteisiin. Lähteiden määrittelyissä on
-            Title-elementteihin kerätty yhden tai useamman lähteen nimet ja mahdollinen sivunumeroviittaukset puolipisteillä
-            eroteltuna.
+            Brothers Keeper -ohjelmalla tuotetussa gedcom-aineistossa on 
+            viittauksia lähteisiin. Lähteiden määrittelyissä on
+            Title-elementteihin kerätty yhden tai useamman lähteen nimet ja 
+            mahdollinen sivunumeroviittaukset puolipisteillä eroteltuna.
             
-            Ohjelman tehtävänä on muodostaa lähteille nimet ilman sivunumeroa ja lisätä gedcomiin omat lähde-elementit Title-rivin 
-            toiselle ja sitä seuraaville lähdemäärittelyille.
+            Ohjelman tehtävänä on muodostaa lähteille nimet ilman sivunumeroa 
+            ja lisätä gedcomiin omat lähde-elementit Title-rivin toiselle ja 
+            sitä seuraaville lähdemäärittelyille.
             
 Ohjelman toiminta:
 
-- Phase 1   Gedcom-aineisto käydään läpi ja kerätään lähteen tunnuskohtaisesti (@Snnnn@) rivinumerot, jotka viittaavat lähteeseen.
-            Kunkin lähde-elementin TITLE-rivistä jäsennellään puolipistein erotetut osat, joiden kunkin tulkitaan kuvaavan yhtä lähdettä 
-            ja mahdollista viittausta siihen. Jos osasta löytyy sivunumeroon viittaus, se lisätään lähdeviittausrivin jälkeiseksi PAGE-riviksi insertions-dictionaryyn.
-            Lähdemäärittelyn alkuperäisen Title-rivin ensimmäisestä osasta muodostetaan sivunumeroton Title-rivi, joka lisätään Title-riviksi replaces-dictionaryyn.
-            Mahdollisten muiden osien sisällöistä muodostetaan SOUR- ja TITL-rivit alkuperäisen lähteen NOTE-osan jälkeen lisättäviksi insertions-dictionaryyn.
+- Phase 1   Gedcom-aineisto käydään läpi ja kerätään lähteen tunnuskohtaisesti 
+            (@Snnnn@) rivinumerot, jotka viittaavat lähteeseen.
+            Kunkin lähde-elementin TITLE-rivistä jäsennellään puolipistein 
+            erotetut osat, joiden kunkin tulkitaan kuvaavan yhtä lähdettä 
+            ja mahdollista viittausta siihen. Jos osasta löytyy sivunumeroon 
+            viittaus, se lisätään lähdeviittausrivin jälkeiseksi PAGE-riviksi 
+            insertions-dictionaryyn.
+            Lähdemäärittelyn alkuperäisen Title-rivin ensimmäisestä osasta 
+            muodostetaan sivunumeroton Title-rivi, joka lisätään Title-riviksi 
+            replaces-dictionaryyn.
+            Mahdollisten muiden osien sisällöistä muodostetaan SOUR- ja 
+            TITL-rivit alkuperäisen lähteen NOTE-osan jälkeen lisättäviksi 
+            insertions-dictionaryyn.
             
 - Phase 2   Ei toimintaa
 
-- Phase 3   Gedcom-aineisto käydään läpi ja jos rivinumero on avaimena jossain dictionaryista, suoritetaan arvo-osassa  korvaukset ja(tai lisäykset
+- Phase 3   Gedcom-aineisto käydään läpi ja jos rivinumero on avaimena jossain 
+            dictionaryista, suoritetaan arvo-osassa korvaukset ja/tai lisäykset
              
 '''
 
@@ -75,7 +89,10 @@ def parseText(textpart):
 #            LOG.debug('    >>>>', lpart)
             if re.match(regexb, lpart):                
                 src_groups = re.match(regexb, lpart).groups()
-                print('Parsed: ' + src_groups[0] + '/' + src_groups[1] + '/' + src_groups[2] + '/' + src_groups[3] + '/' + src_groups[4] + '/' + src_groups[5] + '/' + str(src_groups[6]) + '/' + str(src_groups[7]))
+                print('Parsed: ' + src_groups[0] + '/' + src_groups[1] + '/' \
+                      + src_groups[2] + '/' + src_groups[3] + '/' \
+                      + src_groups[4] + '/' + src_groups[5] + '/' \
+                      + str(src_groups[6]) + '/' + str(src_groups[7]))
                 if archiver == '': 
                     archiver = src_groups[0]
                 textout = archiver + src_groups[1] + ' ' + src_groups[2] 
@@ -100,7 +117,7 @@ def parseText(textpart):
 # Phase 1: Process the GEDCOM line
 #
 
-def phase1(args, gedline, linenumber):
+def phase1(args, gedline):
 #    for element in element_list: (gedline)
     global linenumber
     global insertions
@@ -112,7 +129,7 @@ def phase1(args, gedline, linenumber):
     global xsourcenumber
     path = gedline.path
     value = gedline.value
-#    linenumber = gedline.1
+#    linenumber = gedline.1inenum
     if path.startswith('HEAD'):
         return
     elif gedline.level > 0 and path.endswith('.SOUR'):    # SOUR referenced by an element
@@ -125,7 +142,8 @@ def phase1(args, gedline, linenumber):
 #            insertions[linenumber] = [pointer]
     elif gedline.level == 0 and value == 'SOUR':
         spointer = gedline.path 
-        print("    New SOUR declaration {}, referenced by {}".format(gedline.line, references[spointer]))
+        print("    New SOUR declaration {}, referenced by {}".\
+              format(gedline.line, references[spointer]))
                            
     elif path.startswith('@S') and path.endswith('.TITL'):
         if gedline.value == ttext:
@@ -138,12 +156,14 @@ def phase1(args, gedline, linenumber):
         citations = result[1]
         print("    -TITL ", ttext, " ", textouts, " ", citations)
         if textouts:
-            replaces[linenumber] = str(gedline.level) + ' ' + gedline.tag + ' ' + gedline.value + ' ' + textouts[0]
+            replaces[linenumber] = str(gedline.level) + ' ' + gedline.tag \
+            + ' ' + gedline.value + ' ' + textouts[0]
         if citations:
             for ind in range(0, len(referrers)):
                 citation = "{} PAGE ".format(str(slevel + 1)) + citations[0]
                 insertions[referrers[ind]] = [citation]
-                print("    Insert lines after {} {}".format(referrers[ind], insertions[referrers[ind]]))    
+                print("    Insert lines after {} {}".\
+                      format(referrers[ind], insertions[referrers[ind]]))    
         if len(textouts) > 1:
             insertions[linenumber+1] = []
             for ind in range(1, len(textouts)):
@@ -153,7 +173,8 @@ def phase1(args, gedline, linenumber):
                 tline = '1 TITL  ' + textouts[ind]
                 insertions[linenumber+1].append(tline)
                 insertions[linenumber+1].append('1 NOTE  ' + textouts[ind])
-                print("    Insert lines after {} {}".format(linenumber+1, insertions[linenumber+1]))
+                print("    Insert lines after {} {}".\
+                      format(linenumber+1, insertions[linenumber+1]))
 #            ttext = '' 
  
     elif path.startswith('@S') and path.endswith('.NOTE'):

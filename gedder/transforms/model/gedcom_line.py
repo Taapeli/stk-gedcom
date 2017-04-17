@@ -31,6 +31,7 @@ class GedcomLine(object):
         '''
         self.path = ""
         self.attributes = {}
+        self.linenum = linenum
 
         if type(line) == str:
             # Parse line
