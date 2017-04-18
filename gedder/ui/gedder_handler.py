@@ -30,7 +30,7 @@ _LOGFILE="transform.log"
 # Show menu in application window, not on the top of Ubuntu desktop
 os.environ['UBUNTU_MENUPROXY']='0'
 
-LOG = logging.getLogger('gedder')
+LOG = logging.getLogger(__name__)
 # run_args = Namespace(# Global options
 #                      output_gedcom=None, display_changes=False, dryrun=False, nolog=False, encoding='utf-8',
 #                      # places options

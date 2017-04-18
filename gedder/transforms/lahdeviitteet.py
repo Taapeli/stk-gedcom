@@ -46,7 +46,7 @@ version = "0.9"
 
 import re
 import logging
-LOG = logging.getLogger()
+LOG = logging.getLogger(__name__)
 LOG.setLevel(logging.DEBUG)
 
 intag = False

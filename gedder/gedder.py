@@ -1,7 +1,7 @@
-#
-# Gedcom cleaner application window
-# 12.12.2016 / Juha Mäkeläinen
-#
+'''
+ Gedcom cleaner application window
+ 12.12.2016 / Juha Mäkeläinen
+'''
 
 import os 
 import gi
