@@ -65,10 +65,10 @@ fixedfams = {} # key=@fam@ value=place
 def add_args(parser):
     pass
 
-def initialize(args):
+def initialize(run_args):
     pass
 
-def phase1(args,gedline):
+def phase1(run_args, gedline):
     '''
 		1st traverse: finding all families
     '''
@@ -93,10 +93,10 @@ def phase1(args,gedline):
     if path.endswith(".MARR.PLAC"):  # @fam@.MARR.PLAC place
         parts = path.split(".")
         fam = parts[0]
-        place = value
+        #place = value
         fams[fam].place = value
 
-def phase2(args):
+def phase2(run_args):
     '''
         Parse multiple places mentioned as marriage location: "loc1, (loc2, loc3)"
     '''
@@ -109,7 +109,7 @@ def phase2(args):
             resi[faminfo.wife].append((wife_place,faminfo.date))
             fixedfams[fam] = m.group(1)
 
-def phase3(args,gedline,f):
+def phase3(run_args, gedline, f):
     '''
         2nd traverse: creating the new GEDCOM file
     '''

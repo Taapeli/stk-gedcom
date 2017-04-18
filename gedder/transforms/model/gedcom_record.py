@@ -97,9 +97,9 @@ class GedcomRecord(GedcomLine):
 
 
 if __name__ == '__main__':
-    # Test set
+    ''' Test set '''
     from transforms.model.ged_output import Output
-    from argparse import Namespace
+
     logging.basicConfig(filename='example.log', level=logging.DEBUG, format='%(levelname)s:%(message)s')
     LOG.info("------ Ajo '%s' alkoi %s", "Testi", datetime.datetime.now().strftime('%a %Y-%m-%d %H:%M:%S') + " ------")
 
@@ -127,8 +127,8 @@ if __name__ == '__main__':
     my_name = PersonName(GedcomLine('1 NAME Jouto-Janne'))
     my_name.add_line(GedcomLine('2 NOTE _orig_ALIA Jouto-Janne'))
     my_record_4.add_member(my_name)
-    args = Namespace(nolog=False, output_gedcom='../../out.txt', encoding='UTF-8', dryrun=False)
-    with Output(args) as f:
+    run_args = {'nolog': False, 'output_gedcom': '../../out.txt', 'encoding': 'UTF-8', 'dryrun': False}
+    with Output(run_args) as f:
         GedcomLine("0 HEAD").emit(f)
         my_record_1.emit(f)
         my_record_2.emit(f)

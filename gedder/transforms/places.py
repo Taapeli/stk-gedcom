@@ -65,25 +65,29 @@ def add_args(parser):
     parser.add_argument('--mark-changes', action='store_true',
                         help='Replace changed PLAC tags with PLAC-X')
                         
-def initialize(args):
-    read_parishes(args.parishfile)
-    read_villages(args.villagefile)
+def initialize(run_args):
+    read_parishes(run_args['parishfile'])
+    read_villages(run_args['villagefile'])
 
 
-def phase2(args):
+def phase2(run_args):
     pass
 
-def phase3(args,gedline,f):
+def phase3(run_args,gedline,f):
     if gedline.tag == "PLAC":
-        if not gedline.value: return
+        if not gedline.value: 
+            return
         place = gedline.value
-        newplace = process_place(args,place)
+        newplace = process_place(run_args, place)
         if newplace != place: 
-            if args.display_changes: print("'{}' -> '{}'".format(place,newplace))
+            if run_args['display_changes']:
+                print("'{}' -> '{}'".format(place,newplace))
             gedline.value = newplace  
-            if args.mark_changes: gedline.tag = "PLAC-X"
+            if run_args['mark_changes']:
+                gedline.tag = "PLAC-X"
         else:
-            if args.display_nonchanges: print("Not changed: '{}'".format(place))
+            if run_args['display_nonchanges']:
+                print("Not changed: '{}'".format(place))
     gedline.emit(f)
             
 ignored = [name.strip() for name in ignored_text.splitlines() if name.strip() != ""]
@@ -128,12 +132,16 @@ def read_villages(villagefile):
         village = village.strip().lower()
         villages[auto_combine(parish)].add(village)
 
-def ignore(args,names):
+def ignore(run_args, names):
     for name in names:
-        if len(name) < args.minlen: return True
-        if name.lower() in ignored: return True
-        if args.ignore_digits and numeric(name): return True
-        if args.ignore_lowercase and name.islower(): return True
+        if len(name) < run_args['minlen']:
+            return True
+        if name.lower() in ignored:
+            return True
+        if run_args['ignore_digits'] and numeric(name):
+            return True
+        if run_args['ignore_lowercase'] and name.islower(): 
+            return True
     return False
 
 auto_combines = [
@@ -166,24 +174,28 @@ def stringmatch(place,matches):
         if place.find(match) >= 0: return True
     return False
     
-def process_place(args,place):
-    if args.match and not stringmatch(place,args.match): return place
-    if args.add_commas and "," not in place:
-        if args.auto_combine:
+def process_place(run_args, place):
+    if run_args['match'] and not stringmatch(place,run_args['match']):
+        return place
+    if run_args['add_commas'] and "," not in place:
+        if run_args['auto_combine']:
             place = auto_combine(place)
         names = place.split()
-        if ignore(args,names): 
-            if args.auto_combine: place = revert_auto_combine(place)
-            if args.display_ignored: print("ignored: " + place)
+        if ignore(run_args, names): 
+            if run_args['auto_combine']:
+                place = revert_auto_combine(place)
+            if run_args['display_ignored']:
+                print("ignored: " + place)
             return place
         place = ", ".join(names)
     if "," in place:
         names = [name.strip() for name in place.split(",") if name.strip() != ""]
         if len(names) == 1: 
-            if args.auto_combine: place = revert_auto_combine(place)
+            if run_args['auto_combine']:
+                place = revert_auto_combine(place)
             return place
         do_reverse = False
-        if args.auto_order:
+        if run_args['auto_order']:
             #print(sorted(parishes))
             #print(sorted(villages["helsingin-pitäjä"]))
             #print(names)
@@ -191,10 +203,10 @@ def process_place(args,place):
                 do_reverse = True
             if names[0] in countries:
                 do_reverse = True
-        if args.reverse or do_reverse:
+        if run_args['reverse'] or do_reverse:
             names.reverse()
             place = ", ".join(names)
-    if args.auto_combine:
+    if run_args['auto_combine']:
         place = revert_auto_combine(place)
     return place
  
@@ -203,19 +215,18 @@ def process_place(args,place):
 def check(in_file, expected_output, reverse=False, add_commas=False, 
           ignore_lowercase=False, ignore_digits=False):
     class Args: pass
-    args = Args()
-    args.reverse = reverse
-    args.add_commas = add_commas
-    args.ignore_lowercase = ignore_lowercase
-    args.ignore_digits = ignore_digits
-    args.display_ignored = False
-    args.display_ignored = False
-    args.auto_order = True
-    args.auto_combine = True
-    args.minlen = 0
-    args.match = None
+    run_args = {'reverse': reverse,
+                'add_commas': add_commas,
+                'ignore_lowercase': ignore_lowercase,
+                'ignore_digits': ignore_digits,
+                'display_ignored': False,
+                'auto_order': True,
+                'auto_combine': True,
+                'min_len': 0,
+                'match': None
+                }
  
-    newplace = process_place(args,in_file)
+    newplace = process_place(run_args, in_file)
     if newplace != expected_output:
         print("{}: expecting '{}', got '{}'".format(in_file, expected_output, newplace))
         
