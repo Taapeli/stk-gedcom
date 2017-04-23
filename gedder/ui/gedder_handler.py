@@ -143,13 +143,14 @@ class Handler:
                     self.textbuffer.insert_with_tags(position,line[6:], e_tag)
                 else:
                     self.textbuffer.insert_with_tags(position, line.replace('DEBUG:', '', 1), d_tag)
-            f.close()
         except FileNotFoundError:
             position = self.textbuffer.get_end_iter()
             self.textbuffer.insert_with_tags(position,"Ei tulostiedostoa " + _LOGFILE, e_tag)
         except Exception as e:
             position = self.textbuffer.get_end_iter()
             self.textbuffer.insert_with_tags(position,"Virhe {!r}".format(str(e), e_tag))
+        finally:
+            f.close()
 
     def on_displaystate_close(self, *args):
         ''' Suljetaan lokitiedosto-ikkuna '''

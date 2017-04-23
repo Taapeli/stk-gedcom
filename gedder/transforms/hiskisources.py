@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
+"""
+Hiski-lähdeviitteiden tulkinta (?)
 
+@author: ?
+"""
 #import collections
 import urllib.request
 
@@ -81,8 +85,8 @@ def text_content(s,tag):
     return txt.decode("iso8859-1")
 
 def get_hiski_info(link):
-    srk = None
-    kirja = None
+#     srk = None
+#     kirja = None
     s = urllib.request.urlopen(link).read()
     srk = text_content(s, b"H2")
     kirja = text_content(s, b"H3")

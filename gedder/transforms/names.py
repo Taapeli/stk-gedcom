@@ -35,6 +35,8 @@ from transforms.model.gedcom_line import GedcomLine
 from transforms.model.gedcom_record import GedcomRecord
 from transforms.model.person_name import PersonName
 
+version = "0.1"
+
 # Active Indi logical record GedcomRecord
 indi_record = None
 # state 0 = started, 1 = indi processing, 2 = name processing, 3 = birth processing
@@ -77,7 +79,6 @@ def phase3(run_args, gedline, f):
     ''' 
     ---- INDI automation engine for processing person data ----
          See automation rules below 
-         Hei vaan!
     '''
 
     # For all states
