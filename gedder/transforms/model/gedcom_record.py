@@ -47,7 +47,7 @@ class GedcomRecord(GedcomLine):
 
     
     def __str__(self):
-        return "GedcomRecord({})".format(self.id)
+        return "GedcomRecord {} {} ({} riviä)".format(self.path, self.value, len(self.rows))
 
 
     def add_member(self, gedline):
@@ -60,7 +60,7 @@ class GedcomRecord(GedcomLine):
 #             print("#record row({}) <= {} (name {!r})".format(len(self.rows), gedline.path, gedline.name), file=stderr)
             self.current_index = len(self.rows)
             self.rows.append(gedline)
-            if gedline.tag == 'NAME' and not self.name_default:
+            if gedline.tag == 'NAME' and self.name_default == None:
                 # Save the first NAME occurrence
                 self.name_default = self.get_nameobject()
         else:
@@ -73,10 +73,15 @@ class GedcomRecord(GedcomLine):
             writes them as new gedcom lines to file f
         '''
         # Each original NAME row
-        for obj in self.rows: 
+#         print ("#emit {}:".format(self))
+#         i = -1
+        for obj in self.rows:
+#             i += 1; print ("#{:3}     {}".format(i, obj))
+#             j = -1
             if isinstance(obj, PersonName):
                 # Each NAME row generated from /surname1, surname2/
                 for x in obj.get_person_rows(self.name_default):
+#                     j += 1; print ("#{:3}.{:02}  {}".format(i, j, x))
                     f.emit(str(x))
             else:
                 # A GedcomLine outside NAME and its descendants
@@ -97,9 +102,9 @@ class GedcomRecord(GedcomLine):
 
 
 if __name__ == '__main__':
-    # Test set
+    ''' Test set '''
     from transforms.model.ged_output import Output
-    from argparse import Namespace
+
     logging.basicConfig(filename='example.log', level=logging.DEBUG, format='%(levelname)s:%(message)s')
     LOG.info("------ Ajo '%s' alkoi %s", "Testi", datetime.datetime.now().strftime('%a %Y-%m-%d %H:%M:%S') + " ------")
 
@@ -127,8 +132,8 @@ if __name__ == '__main__':
     my_name = PersonName(GedcomLine('1 NAME Jouto-Janne'))
     my_name.add_line(GedcomLine('2 NOTE _orig_ALIA Jouto-Janne'))
     my_record_4.add_member(my_name)
-    args = Namespace(nolog=False, output_gedcom='../../out.txt', encoding='UTF-8', dryrun=False)
-    with Output(args) as f:
+    run_args = {'nolog': False, 'output_gedcom': '../../out.txt', 'encoding': 'UTF-8', 'dryrun': False}
+    with Output(run_args) as f:
         GedcomLine("0 HEAD").emit(f)
         my_record_1.emit(f)
         my_record_2.emit(f)

@@ -29,16 +29,7 @@ _LOGFILE="transform.log"
 
 # Show menu in application window, not on the top of Ubuntu desktop
 os.environ['UBUNTU_MENUPROXY']='0'
-
-LOG = logging.getLogger('gedder')
-# run_args = Namespace(# Global options
-#                      output_gedcom=None, display_changes=False, dryrun=False, nolog=False, encoding='utf-8',
-#                      # places options
-#                      reverse=False, add_commas=False, ignore_lowercase=False, display_nonchanges=False,
-#                      ignore_digits=False, minlen=0, auto_order=False, auto_combine=False, 
-#                      match='', parishfile="seurakunnat.txt", villagefile="kylat.txt")
-
-#global get_transform, run_args
+LOG = logging.getLogger(__name__)
 
 class Handler:
 
@@ -59,11 +50,11 @@ class Handler:
         self.st = self.builder.get_object('statusbar1')
         self.st_id = self.st.get_context_id("gedder")
         # Set default files for parishfile_chooser and villagefilechooser
-        fn = run_args.parishfile
+        fn = run_args['parishfile']
         if fn:
             bu = self.builder.get_object('parishfile_chooser')
             bu.set_filename(fn)
-        fn = run_args.villagefile
+        fn = run_args['villagefile']
         if fn:
             bu = self.builder.get_object('villagefile_chooser')
             bu.set_filename(fn)
@@ -152,13 +143,14 @@ class Handler:
                     self.textbuffer.insert_with_tags(position,line[6:], e_tag)
                 else:
                     self.textbuffer.insert_with_tags(position, line.replace('DEBUG:', '', 1), d_tag)
-            f.close()
         except FileNotFoundError:
             position = self.textbuffer.get_end_iter()
-            self.textbuffer.insert_with_tags(position,"Ei tuloksia näytettävänä", e_tag)
+            self.textbuffer.insert_with_tags(position,"Ei tulostiedostoa " + _LOGFILE, e_tag)
         except Exception as e:
             position = self.textbuffer.get_end_iter()
             self.textbuffer.insert_with_tags(position,"Virhe {!r}".format(str(e), e_tag))
+        finally:
+            f.close()
 
     def on_displaystate_close(self, *args):
         ''' Suljetaan lokitiedosto-ikkuna '''
@@ -171,7 +163,7 @@ class Handler:
         model = combo.get_model()
         value = (model[treeiter][0])
         #value = combo.get_active_text()
-        self.run_args.__setattr__('encoding', value)
+        self.run_args['encoding'] = value
         self.st.push(self.st_id, "Valittu merkistö " + value)
         self.show_fileInfo()
     
@@ -197,7 +189,7 @@ class Handler:
         name = button.get_filename()
         if name:
             self.input_gedcom = name
-            setattr(self.run_args, 'input_gedcom', self.input_gedcom)
+            self.run_args['input_gedcom'] = self.input_gedcom
             self.message_id = self.st.push(self.st_id, "Syöte " + self.input_gedcom)
             self.activate_run_button()
             self.show_fileInfo()
@@ -213,7 +205,7 @@ class Handler:
         self.response = self.dialog.run()
         if self.response == Gtk.ResponseType.OK:
             self.input_gedcom = self.dialog.get_filename()
-            setattr(self.run_args, 'input_gedcom', self.input_gedcom)
+            self.run_args['input_gedcom'] = self.input_gedcom
             self.message_id = self.st.push(self.st_id, "Syöte " + self.input_gedcom)
             self.activate_run_button()
             self.dialog.destroy()

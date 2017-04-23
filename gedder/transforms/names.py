@@ -35,12 +35,14 @@ from transforms.model.gedcom_line import GedcomLine
 from transforms.model.gedcom_record import GedcomRecord
 from transforms.model.person_name import PersonName
 
+version = "0.1"
+
 # Active Indi logical record GedcomRecord
 indi_record = None
 # state 0 = started, 1 = indi processing, 2 = name processing, 3 = birth processing
 state = 0
 
-def initialize(args):
+def initialize(run_args):
     global indi_record
     global state            
     state = 0
@@ -50,15 +52,15 @@ def add_args(parser):
     pass
 
 
-def phase3(args, gedline, f):
+def phase3(run_args, gedline, f):
     '''
     Function phase3 is called once for each line in the input GEDCOM file.
     This function produce the output GEDCOM by calling output_file.emit() for each line.
     If an input line is not modified then the original lines are emitted as is.
 
     Arguments example:
-        args=Namespace(display_changes=False, dryrun=True, encoding='utf-8', \
-                       input_gedcom='../Mun-testi.ged', transform='names')
+        run_args={'display_changes': False, 'dryrun': True, 'encoding': 'utf-8', \
+                  'input_gedcom': ../Mun-testi.ged', 'transform': 'names'}
         gedline=(
             line='1 NAME Antti /Puuhaara/'
             level=1
@@ -71,13 +73,12 @@ def phase3(args, gedline, f):
 
     global logical_record
     global state
-    #print("# Phase3: args={!r}, line={!r}, path={!r}, tag={!r}, value={!r}, f={!r}".\
-    #      format(args,line,path,tag,value,f))
+    #print("# Phase3: run_args={!r}, line={!r}, path={!r}, tag={!r}, value={!r}, f={!r}".\
+    #      format(run_args,line,path,tag,value,f))
 
     ''' 
     ---- INDI automation engine for processing person data ----
          See automation rules below 
-         Hei vaan!
     '''
 
     # For all states

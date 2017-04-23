@@ -34,24 +34,26 @@ ids = set()
 def add_args(parser):
     parser.add_argument("--testiparametri")
 
-def initialize(args):
+def initialize(run_args):
     pass
 
-def phase1(args,gedline):
-    if gedline.path.endswith(".BIRT.PLAC") and gedline.value.startswith("(kastettu)"):  # @id@.BIRT.PLACE (kastettu) xxx
+def phase1(run_args, gedline):
+    if gedline.path.endswith(".BIRT.PLAC") and gedline.value.startswith("(kastettu)"):
+        # @id@.BIRT.PLACE (kastettu) xxx
         parts = gedline.path.split(".")
-        id = parts[0]
-        ids.add(id)
+        indi_id = parts[0]
+        ids.add(indi_id)
 
-def phase2(args):
+def phase2(run_args):
     pass
 
-def phase3(args,gedline,f):
+def phase3(run_args, gedline,f):
     parts = gedline.path.split(".")
-    id = parts[0]
-    if id in ids:
+    indi_id = parts[0]
+    if indi_id in ids:
         if gedline.tag == "BIRT": gedline.tag = "CHR"
-        if gedline.tag == "PLAC" and gedline.value.startswith("(kastettu)"): gedline.value = " ".join(gedline.value.split()[1:])
+        if gedline.tag == "PLAC" and gedline.value.startswith("(kastettu)"): 
+            gedline.value = " ".join(gedline.value.split()[1:])
     gedline.emit(f)
 
 

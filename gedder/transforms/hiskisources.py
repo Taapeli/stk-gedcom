@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
-import collections
+"""
+Hiski-lähdeviitteiden tulkinta (?)
+
+@author: ?
+"""
+#import collections
 import urllib.request
 
 version = "1.0"
@@ -80,8 +85,8 @@ def text_content(s,tag):
     return txt.decode("iso8859-1")
 
 def get_hiski_info(link):
-    srk = None
-    kirja = None
+#     srk = None
+#     kirja = None
     s = urllib.request.urlopen(link).read()
     srk = text_content(s, b"H2")
     kirja = text_content(s, b"H3")
@@ -90,10 +95,10 @@ def get_hiski_info(link):
 def add_args(parser):
     pass
 
-def initialize(args):
+def initialize(run_args):
     pass
 
-def phase1(args,gedline):
+def phase1(run_args, gedline):
     global maxnotenum
      
     # The following two if statements process the GEDCOM lines like
@@ -118,14 +123,14 @@ def phase1(args,gedline):
         n = int(noteid[1:-1])
         if n >= maxnotenum: maxnotenum = n
 
-def phase2(args):
+def phase2(run_args):
     pass
 
-def phase3(args,gedline,f):
+def phase3(run_args, gedline, f):
     global maxnotenum
-    id = gedline.path.split(".")[0]
+    indi_id = gedline.path.split(".")[0]
     if gedline.path.endswith(".SOUR"):  # n SOUR @Sxxxx@ 
-        indi = gedline.path.split(".")[0]
+        #indi = gedline.path.split(".")[0]
         sour = gedline.value
         if sour in citations.original_sour_to_source:
             source,link = citations.original_sour_to_source[sour]
@@ -137,13 +142,13 @@ def phase3(args,gedline,f):
             #f.emit("3 NOTE @N%s@" % maxnotenum)
             #notes.append((maxnotenum,link))
             return
-    if id in citations.original_sour_to_source:
+    if indi_id in citations.original_sour_to_source:
         return # remove original sources
 
     gedline.emit(f)
 
 
-def phase4(args,f):
+def phase4(run_args, f):
     for source in citations.sources.values():
         f.emit("0 @XS%4.4d@ SOUR" % source.num)
         f.emit("1 TITL %s" % source.name)

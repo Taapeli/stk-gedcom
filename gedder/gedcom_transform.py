@@ -29,15 +29,15 @@ end of the program.
 A plugin may contain the following functions:
 
 - add_args(parser)
-- initialize(args)                              # Called once in the beginning of the transformation
-- phase1(args,line,level,path,tag,value)        # [optional] called once per GEDCOM line
-- phase2(args)                                  # [optional] called between phase1 and phase2
-- phase3(args,line,level,path,tag,value,output_file)
+- initialize(run_args)                              # Called once in the beginning of the transformation
+- phase1(run_args,line,level,path,tag,value)        # [optional] called once per GEDCOM line
+- phase2(run_args)                                  # [optional] called between phase1 and phase2
+- phase3(run_args,line,level,path,tag,value,output_file)
                                                 # [optional] called once per GEDCOM line
 
 The function "add_args" is called in the beginning of the program and it allows
 the plugin to add its own arguments for the program. The values of the arguments
-are stored in the "args" object that is passed to the other functions.
+are stored in the "run_args" dictionary that is passed to the other functions.
 
 Function "initialize" is called in the beginning of the transformation.
 
@@ -54,16 +54,17 @@ If an input line is not modified then emit should be called with the original li
 as it's parameter.
 
 The parameters of each phases:
-- "args" is the object returned by ArgumentParser.parse_args.
-- "gedline", a GedcomLine() object, which includes
-    - "line", the original line in the input GEDCOM (unicode string)
-    - "level", the level number of the line (integer)
-    - "path", the current hierarchy of the GEDCOM tags, e.g @I123@.BIRT.DATE
-      representing the DATE tag inside the BIRT tag for the individual @I123@.
-    - "tag", the current tag (last part of path)
-    - "value", the value for the current tag, e.g. a date or a name
-- "output_file" is a file-like object containing the method emit(string) that is used to produce the output
-
+- "run_args"    a dict object from the object returned by ArgumentParser.parse_args 
+                or from gedder.py options.
+- "gedline",    a GedcomLine() object, which includes
+    - "line",   the original line in the input GEDCOM (unicode string)
+    - "level",  the level number of the line (integer)
+    - "path",   the current hierarchy of the GEDCOM tags, e.g @I123@.BIRT.DATE
+                representing the DATE tag inside the BIRT tag for the individual @I123@.
+    - "tag",    the current tag (last part of path)
+    - "value",  the value for the current tag, e.g. a date or a name
+- "output_file" is a file-like object containing the method emit(string) 
+                that is used to produce the output
 """
 _VERSION="0.3"
 _LOGFILE="transform.log"
@@ -83,10 +84,10 @@ def numeric(s):
     return s.replace(".","").isdigit()
 
 
-def read_gedcom(args):
+def read_gedcom(run_args):
     
     try:
-        for linenum, line in enumerate(open(args.input_gedcom, encoding=args.encoding)):
+        for linenum, line in enumerate(open(run_args['input_gedcom'], encoding=run_args['encoding'])):
             # Clean the line
             line = line[:-1]
             if line[0] == "\ufeff": 
@@ -96,44 +97,44 @@ def read_gedcom(args):
             yield gedline
 
     except FileNotFoundError:
-        LOG.error("Tiedostoa '{}' ei ole!".format(args.input_gedcom))
+        LOG.error("Tiedostoa '{}' ei ole!".format(run_args['input_gedcom']))
         raise
     except Exception as err:
         LOG.error(type(err))
         LOG.error("Virhe: {0}".format(err))
 
 
-def process_gedcom(args, transformer, task_name=''):
+def process_gedcom(run_args, transformer, task_name=''):
 
     LOG.info("------ Ajo '%s'   alkoi %s ------", \
              task_name, \
              datetime.datetime.now().strftime('%a %Y-%m-%d %H:%M:%S'))
 
-    transformer.initialize(args)
+    transformer.initialize(run_args)
 
     try:
         # 1st traverse
         if hasattr(transformer,"phase1"):
-            for gedline in read_gedcom(args):
-                transformer.phase1(args, gedline)
+            for gedline in read_gedcom(run_args):
+                transformer.phase1(run_args, gedline)
     
         # Intermediate processing of collected data
         if hasattr(transformer,"phase2"):
-            transformer.phase2(args)
+            transformer.phase2(run_args)
     
         do_phase4 = hasattr(transformer,"phase4")
     
         # 2nd traverse "phase3"
-        with Output(args) as f:
-            f.display_changes = args.display_changes
-            for gedline in read_gedcom(args):
+        with Output(run_args) as f:
+            f.display_changes = run_args['display_changes']
+            for gedline in read_gedcom(run_args):
                 if do_phase4 and gedline.tag == "TRLR":
                     f.original_line = ""
-                    transformer.phase4(args, f)
+                    transformer.phase4(run_args, f)
                 f.original_line = gedline.line.strip()
-                transformer.phase3(args, gedline, f)
+                transformer.phase3(run_args, gedline, f)
     except FileNotFoundError as err:
-        LOG.error("Ohjelma päättyi virheeseen: {}".format(err))
+        LOG.error("Ohjelma päättyi virheeseen {}: {}".format(type(err).__name__, str(err)))
 
     LOG.info("------ Ajo '%s' päättyi %s ------", \
              task_name, \
@@ -182,10 +183,6 @@ def init_log():
 
 
 def main():
-    print("\nTaapeli GEDCOM transform program A (version {})\n".format(_VERSION))
-    print("Lokitiedot: {!r}".format(_LOGFILE))
-    init_log()
-
     parser = argparse.ArgumentParser()
     parser.add_argument('transform', help="Name of the transform (Python module)")
     parser.add_argument('input_gedcom', help="Name of the input GEDCOM file")
@@ -203,6 +200,7 @@ def main():
     parser.add_argument('-l', '--list', action='store_true', help="List transforms")
 
     if len(sys.argv) > 1 and sys.argv[1] in ("-l","--list"):
+        print("\nTaapeli GEDCOM transform program A (version {})\n".format(_VERSION))
         print("List of transforms:")
         for modname,transformer,docline,version in get_transforms():
             print("  {:20.20} {:10.10} {}".format(modname,version,docline))
@@ -220,9 +218,16 @@ def main():
             return
         transformer.add_args(parser)
 
-    args = parser.parse_args()
+    run_args = vars(parser.parse_args())
 
-    process_gedcom(args, transformer, task_name)
+    if task_name == "info":
+        # No file output or log
+        print(transformer.show_info(run_args, transformer, task_name))
+    else:
+        # Process file
+        print("Lokitiedot: {!r}".format(_LOGFILE))
+        init_log()
+        process_gedcom(run_args, transformer, task_name)
 
 if __name__ == "__main__":
     main()

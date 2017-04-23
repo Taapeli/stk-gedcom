@@ -46,7 +46,7 @@ version = "0.9"
 
 import re
 import logging
-LOG = logging.getLogger()
+LOG = logging.getLogger(__name__)
 LOG.setLevel(logging.DEBUG)
 
 intag = False
@@ -63,7 +63,7 @@ ntext = ''
 def add_args(parser):
     pass
 
-def initialize(args):
+def initialize(run_args):
     pass
 
 regexb = "^([A-ZÅÄÖa-zåäö., ]*)(RK|LK|vihityt|syntyneet|pääkirja|F/D)\s*(1[0-9]{3})-([0-9]{0,4})\s*([A-ZÅÄÖa-zåäö,]*)\s*(sivu |s\. |s\.|s |s|p |p\. |p\.|pg\. |pg\.|pg |pg)([0-9]{1,4})*(.*)"        
@@ -117,7 +117,7 @@ def parseText(textpart):
 # Phase 1: Process the GEDCOM line
 #
 
-def phase1(args, gedline):
+def phase1(run_args, gedline):
 #    for element in element_list: (gedline)
     global linenumber
     global insertions
@@ -196,7 +196,7 @@ def phase1(args, gedline):
 # Phase 2: None
 #
 
-def phase2(args):
+def phase2(run_args):
     global linenumber
     linenumber = 0
     print(references)    
@@ -205,7 +205,7 @@ def phase2(args):
 # Phase 3: Build the resulting GEDCOM 
 #
 
-def phase3(args,gedline,f):
+def phase3(run_args, gedline, f):
 #     path = gedline.path
 #     value = gedline.value
  

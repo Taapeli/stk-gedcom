@@ -1,7 +1,7 @@
-#
-# Gedcom cleaner application window
-# 12.12.2016 / Juha Mäkeläinen
-#
+'''
+ Gedcom cleaner application window
+ 12.12.2016 / Juha Mäkeläinen
+'''
 
 import os 
 import gi
@@ -19,25 +19,26 @@ transformer = None
 # Show menu in application window, not on the top of Ubuntu desktop
 os.environ['UBUNTU_MENUPROXY']='0'
 LOG = logging.getLogger(__name__)
-run_args = Namespace(# Global options
-                     input_gedcom=None, 
-                     output_gedcom=None, 
-                     display_changes=False, 
-                     dryrun=False, 
-                     nolog=False, 
-                     encoding='utf-8',
-                     # places options
-                     reverse=False, 
-                     add_commas=False, 
-                     ignore_lowercase=False, 
-                     display_nonchanges=False,
-                     ignore_digits=False, 
-                     minlen=0, 
-                     auto_order=False, 
-                     auto_combine=False, 
-                     match='', 
-                     parishfile="static/seurakunnat.txt", 
-                     villagefile="static/kylat.txt")
+run_args = { \
+            # Global options
+            'input_gedcom':None, 
+            'output_gedcom':None, 
+            'display_changes':False, 
+            'dryrun':False, 
+            'nolog':False, 
+            'encoding':'utf-8',
+            # places options
+            'reverse':False, 
+            'add_commas':False, 
+            'ignore_lowercase':False, 
+            'display_nonchanges':False,
+            'ignore_digits':False, 
+            'minlen':0, 
+            'auto_order':False, 
+            'auto_combine':False, 
+            'match':'', 
+            'parishfile':"static/seurakunnat.txt", 
+            'villagefile':"static/kylat.txt"}
 
 
 def get_transform(name):

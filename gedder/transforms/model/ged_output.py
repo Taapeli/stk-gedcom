@@ -12,26 +12,26 @@ import logging
 LOG = logging.getLogger(__name__)
 
 class Output:
-    def __init__(self, args):
-        self.args = args
-        if 'nolog' in self.args and args.nolog: 
+    def __init__(self, run_args):
+        self.run_args = run_args
+        if 'nolog' in self.run_args and run_args['nolog']: 
             self.log = False
         else:
             self.log = True
-        if 'display_changes' in self.args: 
-            self.display_changes = args.display_changes
+        if 'display_changes' in self.run_args: 
+            self.display_changes = run_args['display_changes']
         else:
             self.display_changes = False
-        if 'encoding' in self.args:
-            self.encoding = self.args.encoding
+        if 'encoding' in self.run_args:
+            self.encoding = self.run_args['encoding']
         else:
             self.encoding = 'UTF-8'
-        if 'input_gedcom' in self.args:
-            self.in_name = self.args.input_gedcom
+        if 'input_gedcom' in self.run_args:
+            self.in_name = self.run_args['input_gedcom']
         else:
             self.in_name = None
-        if 'output_gedcom' in self.args:
-            self.out_name = self.args.output_gedcom
+        if 'output_gedcom' in self.run_args:
+            self.out_name = self.run_args['output_gedcom']
         else:
             self.out_name = None
         self.new_name = None
@@ -49,7 +49,7 @@ class Output:
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.f.close()
-        if 'dryrun' in self.args and self.args.dryrun:
+        if 'dryrun' in self.run_args and self.run_args['dryrun']:
             return
         self.save()
 
@@ -62,6 +62,7 @@ class Output:
         self.f.write(line+"\n")
 
         if self.log:
+            #TODO: _Command should be used form an argument from gedder.py
             self.log = False
             args = sys.argv[1:]
             try:
