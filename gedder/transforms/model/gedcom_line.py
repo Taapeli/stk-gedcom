@@ -12,8 +12,6 @@ class GedcomLine(object):
     - level     2
     - tag       'GIVN'
     - value     'Johan' ...}
-    
-    TODO: Tarkasta rivijoukon muodostus
     '''
     # Current path elemements
     # See https://docs.python.org/3/faq/programming.html#how-do-i-create-static-class-data-and-static-class-methods

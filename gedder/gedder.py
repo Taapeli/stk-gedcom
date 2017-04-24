@@ -62,7 +62,8 @@ def get_transform(name):
 
 if __name__ == "__main__":
     ''' Run Gedder.glade 
-    TODO: with arguments from command line '''
+    IDEA: Why not use arguments from command line?
+    '''
     
     main = Handler(run_args, get_transform)
     Gtk.main()

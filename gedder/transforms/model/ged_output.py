@@ -62,7 +62,7 @@ class Output:
         self.f.write(line+"\n")
 
         if self.log:
-            #TODO: _Command should be used form an argument from gedder.py
+            #TODO: Should follow a setting from gedder.py
             self.log = False
             args = sys.argv[1:]
             try:
