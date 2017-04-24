@@ -168,14 +168,14 @@ class Handler:
         self.show_fileInfo()
     
     def on_combo_logging_changed(self, combo):
-        ''' #TODO: Set loggind level '''
+        ''' #TODO: Apply logging level '''
         value = combo.get_active_id()
         self.loglevel = int(value)
 #         LOG.setLevel(int(value))
         self.st.push(self.st_id, "Lokitaso " + logging.getLevelName(value))
 
     def on_checkbutton_toggled(self, checkButton):
-        ''' Fire checkbutton change: #TODO: what to do? '''
+        ''' Fire checkbutton change: #TODO: how to apply? '''
         self.st.push(self.st_id, "Painettu: " + checkButton.get_label())
         rev = self.builder.get_object("revertButton")
         rev.set_sensitive(False)

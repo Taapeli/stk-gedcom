@@ -174,8 +174,8 @@ class PersonName(GedcomLine):
         else:
             if name_default and name_default.givn and name_default.givn != _NONAME:
                 # Use defaults descended GIVN, NDFX, NICK, and _CALL
-                print("{} tarkasta: {!r} päteekö etunimi '{}'".\
-                      format(self.path, self.value, name_default.givn))
+#                 print("{} tarkasta: {!r} päteekö etunimi '{}'".\
+#                       format(self.path, self.value, name_default.givn))
                 LOG.info("{} tarkasta: {!r} päteekö etunimi '{}'".\
                          format(self.path, self.value, name_default.givn))
                 self.givn = name_default.givn
@@ -389,11 +389,6 @@ class PersonName(GedcomLine):
 
         # 2. r = original input gedcom self.row 
         for r in orig_rows:
-            # 2.0 Pass a NOTE line without '_CALL' as is
-            if r.tag == 'NOTE' and not self.value.startswith('_CALL '):
-                LOG.debug("#{:>36} repl row[{}] {} {!r}".\
-                      format(r.path, len(pn.rows), r.tag, r.value))
-                pn.rows.append(GedcomLine((r.level, r.tag, r.value)))
             # 2.1 Is there a new value for this line
             new_value = in_tags(r.tag)
             if new_value:
@@ -401,7 +396,7 @@ class PersonName(GedcomLine):
                       format(r.path, len(pn.rows), r.tag, new_value))
                 pn.rows.append(GedcomLine((r.level, r.tag, new_value)))
                 # Show NAME differences 
-                if r.tag == 'NAME':
+                if type(r) == PersonName and r.tag_orig == 'NAME' and r.tag != 'ALIA':
                     if re.sub(r' ', '', pn.value.lower()) != name_self: 
                         report_change(r.tag, self.value, new_value)
                     pn.is_preferred_name = False
