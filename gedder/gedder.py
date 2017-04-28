@@ -9,7 +9,6 @@ gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk
 import importlib
 import logging
-from argparse import Namespace
 
 from ui.gedder_handler import Handler
 #import gedcom_transform
