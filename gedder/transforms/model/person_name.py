@@ -305,13 +305,13 @@ class PersonName(GedcomLine):
                 elif len(nm) < 4 and not '.' in nm: # von
                     ''''op5/op6: Create or concatenate prefix'''
                     if prefix:
-                        prefix = ' '.join(nm.lower(), prefix)
+                        prefix = ' '.join((nm.lower(), prefix))
                     else:
                         prefix = nm.lower()
                     state = 4
                 else: # name
                     ''''op3: Another name found'''
-                    name = ' '.join(nm.capitalize(), name)
+                    name = ' '.join((nm.capitalize(), name))
 
         ''''op4: End: output the last name'''
         if name:
