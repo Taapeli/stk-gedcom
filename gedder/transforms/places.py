@@ -80,8 +80,8 @@ def phase3(run_args,gedline,f):
         place = gedline.value
         newplace = process_place(run_args, place)
         if newplace != place: 
-            if run_args['display_changes']:
-                print("'{}' -> '{}'".format(place,newplace))
+            #if run_args['display_changes']:
+            #    print("'{}' -> '{}'".format(place,newplace))
             gedline.value = newplace  
             if run_args['mark_changes']:
                 gedline.tag = "PLAC-X"
@@ -159,6 +159,36 @@ auto_combines = [
     "n ksrk",
 ]
 
+
+def talonumerot(names):
+    """
+    Yritetään hoitaa seuraavanlaiset tapaukset niin että talonnumero tulee yhdistettyä kylän nimeen, esim.
+        Kuopio Vehmasmäki 8 -> Kuopio, Vehmasmäki, Vehmasmäki 8
+        Maaninka Kurolanlahti 6 Viemäki -> Maaninka, Kurolanlahti, Kurolanlahti 6 Viemäki
+    Tässä inputtina kuitenkin jo listaksi hajotettu paikka esim.
+        ["Kuopio","Vehmasmäki","8"] -> ["Kuopio", "Vehmasmäki", "Vehmasmäki 8"]
+        ["Maaninka","Kurolanlahti","6","Viemäki"] -> ["Maaninka", "Kurolanlahti", "Kurolanlahti 6 Viemäki"]
+    """
+    def find_digit(names):
+        for i, name in enumerate(names):
+            if name.isdigit() and int(name) > 0 and int(name) < 1000: return i
+        return None
+    i = find_digit(names)
+    if i is None: return names
+    if i == 0: return names
+    numero = names[i]
+    kyla = names[i-1]
+    talo = ""
+    if i < len(names)-1:
+        talo = names[i+1]
+        names[i] = "%s %s %s" % (kyla,numero,talo)
+        del names[i+1]
+    else:
+        names[i] = "%s %s" % (kyla,numero)
+    names[i] = names[i].strip()
+    return names
+
+
 def auto_combine(place):
     for s in auto_combines:
         place = place.replace(s,s.replace(" ","-"))
@@ -175,6 +205,7 @@ def stringmatch(place,matches):
     return False
     
 def process_place(run_args, place):
+    orig_place = place
     if run_args['match'] and not stringmatch(place,run_args['match']):
         return place
     if run_args['add_commas'] and "," not in place:
@@ -182,11 +213,10 @@ def process_place(run_args, place):
             place = auto_combine(place)
         names = place.split()
         if ignore(run_args, names): 
-            if run_args['auto_combine']:
-                place = revert_auto_combine(place)
             if run_args['display_ignored']:
-                print("ignored: " + place)
-            return place
+                print("ignored: " + orig_place)
+            return orig_place
+        names = talonumerot(names)
         place = ", ".join(names)
     if "," in place:
         names = [name.strip() for name in place.split(",") if name.strip() != ""]
@@ -255,6 +285,9 @@ def test():
     
     check("Äyräpää Vuosalmi N:o 4", "Äyräpää, Vuosalmi, N:o, 4",add_commas=True,ignore_digits=False)
     check("Äyräpää Vuosalmi N:o 4", "Äyräpää Vuosalmi N:o 4",add_commas=True,ignore_digits=True)
+    check("Kuopio Vehmasmäki 8", "Kuopio, Vehmasmäki, Vehmasmäki 8 ",add_commas=True,ignore_digits=False)
+    check("Maaninka Kurolanlahti 6 Viemäki ", "ÄMaaninka, Kurolanlahti, Kurolanlahti 6 Viemäki",add_commas=True,ignore_digits=False)
+
 
     
 if __name__ == "__main__":
