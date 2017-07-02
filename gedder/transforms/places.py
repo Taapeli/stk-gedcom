@@ -204,7 +204,7 @@ def stringmatch(place,matches):
         if place.find(match) >= 0: return True
     return False
     
-def process_place(run_args, place):
+def process_place(run_args, place): 
     orig_place = place
     if run_args['match'] and not stringmatch(place,run_args['match']):
         return place
