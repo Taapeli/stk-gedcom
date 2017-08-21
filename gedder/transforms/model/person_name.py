@@ -17,6 +17,17 @@ _CHGTAG = "NOTE _orig_"  # Comment: original format
 _UNNAMED = ['nimetön', 'tuntematon', 'N.N.', '?']
 _PATRONYME = {'poika':'poika', 'p.':'poika', 'sson':'sson', 'ss.':'sson', 's.':'son',
              'tytär':'tytär', 't.':'tytär', 'dotter':'dotter', 'dr.':'dotter', }
+_LATIN_PATRONYME = [
+       "Æschilli", "Aeschilli", "Eschilli", "Adami", "Andreæ",
+       "Andreae", "Algothi", "Arvidi", "Axelii", "Bartholdi",
+       "Benedicti", "Christierni", "Danielis", "Erici", "Erlandi",
+       "Esaiæ", "Esaiae", "Fabiani", "Georgii", "Gustavi",
+       "Henrici", "Hezekielis", "Haqvini", "Isaaci", "Jacobi",
+       "Jeremiae", "Johannis", "Johannis", "Justi", "Laurentii",
+       "Marci", "Magni", "Matthiae", "Nicolai", "Olai",
+       "Petri", "Pauli", "Reginaldi", "Samueli", "Sigfridi",
+       "Stephani", "Svenonis", "Thomæ", "Thomae"
+    ]
 _SURN = {'os.':'avionimi', 'o.s.':'avionimi', 'ent.':'otettu nimi', 'e.':'otettu nimi', \
          '/':'tunnettu myös', ',':'tunnettu myös'}
 #_VON = ['von', 'af', 'de', 'la']
@@ -62,6 +73,8 @@ class PersonName(GedcomLine):
             GedcomLine.__init__(self, (gedline.level, gedline.tag, gedline.value))
         else:
             GedcomLine.__init__(self, gedline)
+        # If any name has a question mark, a NOTE must be written to gedcom
+        self.questionable = '?' in str(gedline)
         # For ALIA line the tag may be changed later
         self.tag_orig = self.tag
 
@@ -111,7 +124,8 @@ class PersonName(GedcomLine):
                  Creates NAME, GIVN, SURN, NSFX rows and their associated lines into self.rows
         '''
         ret = []    # List of merged GedcomLines
-        for pn in self._extract_surnames():
+        surnames = self._extract_surnames()
+        for pn in surnames:
             LOG.debug('#' + str(pn))
             # Merge original and new rows
             self._create_gedcom_rows(pn)
@@ -128,8 +142,12 @@ class PersonName(GedcomLine):
         def _match_patronyme(nm):
             ''' Returns full patronyme name, if matches, else None
             '''
+            if nm in _LATIN_PATRONYME:
+                # Any of Latin patronymes is accepted as is
+                return nm;
             for short, full in _PATRONYME.items():
-                if nm.endswith(short):
+                # Has ending as short, but short is not the whole name
+                if nm.endswith(short) and not short == nm:
                     # 'Matinp.' --> 'Matinpoika'
                     return nm[:-len(short)] + full
             return None
@@ -334,7 +352,8 @@ class PersonName(GedcomLine):
         ''' Stores the given PersonName as GedcomLines so that previous values of pn.rows are merged.
             This is important, as original lines may have descentants like SOUR, which must be kept
             in place.
-            1. Inset NAME row on the top
+            1. Insert NAME row on the top
+               1.1 If original value had '?', insert a NOTE _question message
             2. Loop trough original GedcomLines self.rows
                2.0 If '2 NOTE' line's value doesn't start with '_CALL ', do not update
                2.1 If tag GIVN, SURN or NSFX is found, update/report the pn.row
@@ -380,6 +399,12 @@ class PersonName(GedcomLine):
 
         # 1. The first row is the PersonName (inherited class from GedcomLine)
         orig_rows = [self]
+        # 1.1 If original value had '?', insert a NOTE _question message
+        if self.questionable:
+            orig_rows.append(GedcomLine( (self.level + 1, 
+                 "NOTE", "_question Nimessä on kysymysmerkki") ))
+            LOG.info("{} Selvitä kysymysmerkin osoittama tieto: {!r}".\
+                     format(self.path, self.value))
 #         if pn.is_preferred_name:
             # Only the person's first NAME and there the first surname 
             # carries the gedcom lines inherited from input file
