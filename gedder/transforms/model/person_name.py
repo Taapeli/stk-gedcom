@@ -34,8 +34,11 @@ _SURN = {'os.':'avionimi', 'o.s.':'avionimi', 'ent.':'otettu nimi', 'e.':'otettu
 _BABY = {"vauva":"U", "poikavauva":"M", "tyttövauva":"F", 
          "poikalapsi":"M", "tyttölapsi":"F", "lapsi":"U",
          "(vauva)":"U", "(poikavauva)":"M", "(tyttövauva)":"F", 
-         "(poikalapsi)":"M", "(tyttölapsi)":"F", "(lapsi)":"U"}
-#TODO: Lyhenteet myös ruotsiksi
+         "(poikalapsi)":"M", "(tyttölapsi)":"F", "(lapsi)":"U",
+         "barn":"U", "son":"M", "gåsse":"M", 
+         "dotter":"F", "flicke":"F", "fl.barn":"U", "dödf.barn":"U",
+         "(barn)":"U", "(son)":"M", "(gåsse)":"M", 
+         "(dotter)":"F", "(flicke)":"F", "(fl.barn)":"U", "(dödf.barn)":"U"}
 
 
 class PersonName(GedcomLine):
@@ -172,6 +175,7 @@ class PersonName(GedcomLine):
                 elif gnames[0] in _BABY:
                     # A unnamed baby
                     self.givn = _NONAME
+                    self.sex = _BABY[gnames[0]]
                     return
 #TODO: Tämä muutos ei näy Note-riveillä
 
@@ -359,6 +363,7 @@ class PersonName(GedcomLine):
                2.1 If tag GIVN, SURN or NSFX is found, update/report the pn.row
                2.2 Else copy self.row the to pn.rows
             3. Create new pn.rows, if any of GIVN, SURN or NSFX is not used
+            4. Create SEX row, if self.sex is defined
         '''
 
         def in_tags(tag):
@@ -439,6 +444,11 @@ class PersonName(GedcomLine):
                 LOG.debug("#{:>36} new  row[{}] {} {!r}".\
                       format("{}.{}".format(self.path, tag), len(pn.rows), tag, value))
                 pn.rows.append(GedcomLine((pn.level + 1, tag, value)))
+
+        # 4 Gender, if defined
+        if self.sex and self.sex != "U":    # Only "M" or "F"
+            pn.rows.append(GedcomLine((self.level+1, "SEX", self.sex)))
+
 
 # Keskeneräinen idea, olisikohan tarpeen, toimisikohan?
 #
