@@ -15,8 +15,10 @@ _NONAME = 'N'            # Marker for missing name part
 _CHGTAG = "NOTE _orig_"  # Comment: original format
 
 _UNNAMED = ['nimetön', 'tuntematon', 'N.N.', '?']
-_PATRONYME = {'poika':'poika', 'p.':'poika', 'sson':'sson', 'ss.':'sson', 's.':'son',
-             'tytär':'tytär', 't.':'tytär', 'dotter':'dotter', 'dr.':'dotter', }
+_PATRONYME = {'poika':'poika', 'p.':'poika', 'p':'poika',
+              'sson':'sson', 'ss.':'sson', 's.':'son',
+             'tytär':'tytär', 't.':'tytär', 'tr':'tytär', 
+             'dotter':'dotter', 'dr.':'dotter' }
 _LATIN_PATRONYME = [
        "Æschilli", "Aeschilli", "Eschilli", "Adami", "Andreæ",
        "Andreae", "Algothi", "Arvidi", "Axelii", "Bartholdi",
@@ -446,7 +448,7 @@ class PersonName(GedcomLine):
                 pn.rows.append(GedcomLine((pn.level + 1, tag, value)))
 
         # 4 Gender, if defined
-        if self.sex and self.sex != "U":    # Only "M" or "F"
+        if hasattr(self, 'sex') and self.sex != "U":    # Only "M" or "F"
             pn.rows.append(GedcomLine((self.level+1, "SEX", self.sex)))
 
 

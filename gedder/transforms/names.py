@@ -1,4 +1,6 @@
 '''
+    Nimimuotojen normalisointi
+
     Processes gedcom lines trying to fix problems of individual name tags
 
     The input flow of GedcomLine objects have the following process:
