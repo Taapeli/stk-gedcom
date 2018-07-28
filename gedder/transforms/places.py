@@ -52,12 +52,6 @@ def add_args(parser):
                         help='Try to combine certain names...')
     parser.add_argument('--match', type=str, action='append',
                         help='Only process places containing any match string')
-    parser.add_argument('--parishfile', type=str,
-                        help='File with a list of parishes', default="static/seurakunnat.txt")
-    parser.add_argument('--villagefile', type=str,
-                        help='File with a list of villages', default="static/kylat.txt")
-    #parser.add_argument('--display-changes', action='store_true',
-    #                    help='Display changed places')
     parser.add_argument('--display-nonchanges', action='store_true',
                         help='Display unchanged places')
     parser.add_argument('--display-ignored', action='store_true',
@@ -66,8 +60,8 @@ def add_args(parser):
                         help='Replace changed PLAC tags with PLAC-X')
                         
 def initialize(run_args):
-    read_parishes(run_args['parishfile'])
-    read_villages(run_args['villagefile'])
+    read_parishes("static/seurakunnat.txt")
+    read_villages("static/kylat.txt")
 
 
 def phase2(run_args):
@@ -178,14 +172,12 @@ def talonumerot(names):
     if i == 0: return names
     numero = names[i]
     kyla = names[i-1]
-    talo = ""
     if i < len(names)-1:
         talo = names[i+1]
         names[i] = "%s %s %s" % (kyla,numero,talo)
         del names[i+1]
     else:
         names[i] = "%s %s" % (kyla,numero)
-    names[i] = names[i].strip()
     return names
 
 
